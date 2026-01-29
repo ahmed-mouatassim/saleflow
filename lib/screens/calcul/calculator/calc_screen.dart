@@ -1,0 +1,953 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'provider/calculator_provider.dart';
+import 'provider/calc_data_provider.dart';
+import 'constants/calc_constants.dart';
+import 'widgets/calc_button.dart';
+import 'widgets/calc_dropdown.dart';
+import 'widgets/calc_text_field.dart';
+import 'widgets/result_dialog.dart';
+import 'widgets/section_title.dart';
+import 'widgets/sponge_layer_card.dart';
+
+/// ===== Calculator Screen =====
+/// Modern price calculator with Glassmorphism design
+/// Uses Provider for state management
+class CalcScreen extends StatelessWidget {
+  final bool isEmbedded;
+
+  const CalcScreen({super.key, this.isEmbedded = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return _CalcScreenContent(isEmbedded: isEmbedded);
+  }
+}
+
+class _CalcScreenContent extends StatelessWidget {
+  final bool isEmbedded;
+
+  const _CalcScreenContent({this.isEmbedded = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final provider = context.watch<CalculatorProvider>();
+
+    return Scaffold(
+      backgroundColor: Colors.transparent, // Backed by home background
+      body: Stack(
+        children: [
+          // Main content
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // ===== Content with rounded top corners =====
+              SliverToBoxAdapter(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 0),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? CalcTheme.backgroundDark
+                        : CalcTheme.backgroundLight,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(32),
+                      topRight: Radius.circular(32),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        // ===== Basic Dimensions Section =====
+                        _buildBasicDimensionsSection(context, provider, isDark),
+
+                        // ===== Sponge Layers Section =====
+                        _buildSpongeLayersSection(context, provider, isDark),
+
+                        // ===== Footer Section =====
+                        _buildFooterSection(context, provider, isDark),
+
+                        // ===== Dress Section =====
+                        _buildDressSection(context, provider, isDark),
+
+                        // ===== Springs Section =====
+                        _buildSpringsSection(context, provider, isDark),
+
+                        // ===== Sfifa Counts Section =====
+                        _buildSfifaCountsSection(context, provider, isDark),
+
+                        // ===== Validation Errors =====
+                        if (provider.hasErrors)
+                          _buildErrorsCard(provider, isDark),
+
+                        // ===== Calculate Button =====
+                        const SizedBox(height: 24),
+                        _buildCalculateButton(context, provider),
+
+                        // ===== Reset Button =====
+                        const SizedBox(height: 12),
+                        _buildResetButton(context, provider),
+
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // // ===== APP BAR =====
+  // Widget _buildAppBar(BuildContext context, bool isDark, bool isEmbedded) {
+  //   return SliverAppBar(
+  //     expandedHeight: 180,
+  //     floating: true,
+  //     pinned: true,
+  //     centerTitle: true,
+  //     elevation: 0,
+  //     backgroundColor: Colors.transparent,
+  //     leading: isEmbedded
+  //         ? const SizedBox.shrink()
+  //         : Container(
+  //             margin: const EdgeInsets.all(8),
+  //             decoration: BoxDecoration(
+  //               color: Colors.white.withValues(alpha: 0.15),
+  //               borderRadius: BorderRadius.circular(12),
+  //               border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+  //             ),
+  //             child: IconButton(
+  //               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+  //               color: Colors.white,
+  //               onPressed: () => Navigator.of(context).pop(),
+  //             ),
+  //           ),
+  //     automaticallyImplyLeading: !isEmbedded,
+  //     flexibleSpace: ClipRRect(
+  //       borderRadius: const BorderRadius.only(
+  //         bottomLeft: Radius.circular(32),
+  //         bottomRight: Radius.circular(32),
+  //       ),
+  //       child: FlexibleSpaceBar(
+  //         titlePadding: const EdgeInsets.only(right: 16, bottom: 24, left: 60),
+  //         title: Row(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             Container(
+  //               padding: const EdgeInsets.all(8),
+  //               decoration: BoxDecoration(
+  //                 color: Colors.white.withValues(alpha: 0.2),
+  //                 borderRadius: BorderRadius.circular(12),
+  //                 border: Border.all(
+  //                   color: Colors.white.withValues(alpha: 0.3),
+  //                   width: 1.5,
+  //                 ),
+  //               ),
+  //               child: const Icon(
+  //                 Icons.calculate_rounded,
+  //                 color: Colors.white,
+  //                 size: 20,
+  //               ),
+  //             ),
+  //             const SizedBox(width: 12),
+  //             const Text(
+  //               'حاسبة الأسعار الشاملة',
+  //               style: TextStyle(
+  //                 fontFamily: 'Tajawal',
+  //                 fontWeight: FontWeight.bold,
+  //                 fontSize: 16,
+  //                 color: Colors.white,
+  //                 shadows: [
+  //                   Shadow(
+  //                     color: Colors.black26,
+  //                     blurRadius: 10,
+  //                     offset: Offset(0, 2),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //         background: Container(
+  //           decoration: const BoxDecoration(
+  //             gradient: CalcTheme.headerGradient,
+  //             borderRadius: BorderRadius.only(
+  //               bottomLeft: Radius.circular(32),
+  //               bottomRight: Radius.circular(32),
+  //             ),
+  //           ),
+  //           child: Stack(
+  //             children: [
+  //               // Animated background shapes
+  //               Positioned(
+  //                 right: -40,
+  //                 top: -60,
+  //                 child: Container(
+  //                   width: 200,
+  //                   height: 200,
+  //                   decoration: BoxDecoration(
+  //                     shape: BoxShape.circle,
+  //                     gradient: RadialGradient(
+  //                       colors: [
+  //                         Colors.white.withValues(alpha: 0.15),
+  //                         Colors.white.withValues(alpha: 0.0),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ),
+  //               Positioned(
+  //                 left: -30,
+  //                 bottom: -50,
+  //                 child: Container(
+  //                   width: 150,
+  //                   height: 150,
+  //                   decoration: BoxDecoration(
+  //                     shape: BoxShape.circle,
+  //                     gradient: RadialGradient(
+  //                       colors: [
+  //                         CalcTheme.shimmer.withValues(alpha: 0.2),
+  //                         CalcTheme.shimmer.withValues(alpha: 0.0),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ),
+  //               Positioned(
+  //                 right: 60,
+  //                 bottom: 30,
+  //                 child: Container(
+  //                   width: 80,
+  //                   height: 80,
+  //                   decoration: BoxDecoration(
+  //                     shape: BoxShape.circle,
+  //                     gradient: RadialGradient(
+  //                       colors: [
+  //                         CalcTheme.accent.withValues(alpha: 0.25),
+  //                         CalcTheme.accent.withValues(alpha: 0.0),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ),
+  //               // Geometric decorations
+  //               Positioned(
+  //                 left: 40,
+  //                 top: 50,
+  //                 child: Transform.rotate(
+  //                   angle: 0.5,
+  //                   child: Container(
+  //                     width: 50,
+  //                     height: 50,
+  //                     decoration: BoxDecoration(
+  //                       borderRadius: BorderRadius.circular(12),
+  //                       border: Border.all(
+  //                         color: Colors.white.withValues(alpha: 0.1),
+  //                         width: 2,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ),
+  //               Positioned(
+  //                 right: 120,
+  //                 top: 30,
+  //                 child: Container(
+  //                   width: 30,
+  //                   height: 30,
+  //                   decoration: BoxDecoration(
+  //                     color: Colors.white.withValues(alpha: 0.1),
+  //                     borderRadius: BorderRadius.circular(8),
+  //                   ),
+  //                 ),
+  //               ),
+  //               // Subtle mesh pattern overlay
+  //               Positioned.fill(
+  //                 child: ClipRRect(
+  //                   borderRadius: const BorderRadius.only(
+  //                     bottomLeft: Radius.circular(32),
+  //                     bottomRight: Radius.circular(32),
+  //                   ),
+  //                   child: CustomPaint(painter: _MeshPatternPainter()),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  // ===== BASIC DIMENSIONS =====
+  Widget _buildBasicDimensionsSection(
+    BuildContext context,
+    CalculatorProvider provider,
+    bool isDark,
+  ) {
+    return Column(
+      children: [
+        const SectionTitle(
+          title: 'الأبعاد الأساسية',
+          icon: Icons.straighten_rounded,
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: CalcTextField(
+                label: 'الطول',
+                hint: 'أدخل الطول',
+                prefixIcon: Icons.straighten_rounded,
+                controller: provider.heightController,
+                onChanged: (value) {
+                  provider.setHeight(double.tryParse(value) ?? 0);
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: CalcTextField(
+                label: 'العرض',
+                hint: 'أدخل العرض',
+                prefixIcon: Icons.swap_horiz_rounded,
+                controller: provider.widthController,
+                onChanged: (value) {
+                  provider.setWidth(double.tryParse(value) ?? 0);
+                },
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // ===== SPONGE LAYERS =====
+  Widget _buildSpongeLayersSection(
+    BuildContext context,
+    CalculatorProvider provider,
+    bool isDark,
+  ) {
+    final dataProvider = context.watch<CalcDataProvider>();
+
+    return Column(
+      children: [
+        const SectionTitle(title: 'طبقات الإسفنج', icon: Icons.layers_rounded),
+
+        // Layer Cards
+        ...provider.spongeLayers.asMap().entries.map((entry) {
+          final index = entry.key;
+          final layer = entry.value;
+
+          return SpongeLayerCard(
+            index: index,
+            layer: layer,
+            basicHeight: provider.height, // الطول من الأبعاد الأساسية
+            basicWidth: provider.width, // العرض من الأبعاد الأساسية
+            spongeTypesList: dataProvider.spongeTypes.keys.toList(),
+            onTypeChanged: (type) {
+              provider.updateSpongeLayer(index, type: type);
+            },
+            onLayerCountChanged: (count) {
+              provider.updateSpongeLayer(index, layerCount: count);
+            },
+            onThicknessChanged: (thickness) {
+              provider.updateSpongeLayer(index, length: thickness);
+            },
+            onDelete: () => provider.removeSpongeLayer(index),
+          );
+        }),
+
+        // Add Layer Button
+        const SizedBox(height: 8),
+        _buildAddLayerButton(context, provider),
+      ],
+    );
+  }
+
+  Widget _buildAddLayerButton(
+    BuildContext context,
+    CalculatorProvider provider,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        provider.addSpongeLayer();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: CalcTheme.success,
+            width: 2,
+            strokeAlign: BorderSide.strokeAlignCenter,
+          ),
+          color: CalcTheme.success.withValues(alpha: 0.05),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: CalcTheme.success.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.add_rounded,
+                color: CalcTheme.success,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'إضافة طبقة إسفنج',
+              style: TextStyle(
+                color: CalcTheme.success,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Tajawal',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ===== FOOTER =====
+  Widget _buildFooterSection(
+    BuildContext context,
+    CalculatorProvider provider,
+    bool isDark,
+  ) {
+    final isEnabled = provider.isFooterEnabled;
+
+    return Column(
+      children: [
+        // Section Title with Toggle
+        Padding(
+          padding: const EdgeInsets.only(top: 28, bottom: 18),
+          child: Row(
+            children: [
+              // Accent line
+              Container(
+                width: 5,
+                height: 36,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      isEnabled ? CalcTheme.primaryStart : Colors.grey,
+                      isEnabled ? CalcTheme.primaryEnd : Colors.grey.shade400,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      (isEnabled ? CalcTheme.primaryStart : Colors.grey)
+                          .withValues(alpha: 0.15),
+                      (isEnabled ? CalcTheme.primaryEnd : Colors.grey)
+                          .withValues(alpha: 0.08),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  Icons.grid_view_rounded,
+                  color: isEnabled ? CalcTheme.primaryStart : Colors.grey,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  'حساب الفوتر',
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w700,
+                    color: isEnabled
+                        ? (isDark
+                              ? CalcTheme.textPrimaryDark
+                              : CalcTheme.textPrimaryLight)
+                        : Colors.grey,
+                    fontFamily: 'Tajawal',
+                  ),
+                ),
+              ),
+              // Toggle Switch
+              Switch(
+                value: isEnabled,
+                onChanged: (value) => provider.setFooterEnabled(value),
+                activeThumbColor: CalcTheme.primaryStart,
+                activeTrackColor: CalcTheme.primaryStart.withValues(alpha: 0.3),
+              ),
+            ],
+          ),
+        ),
+        // Input fields (dimmed when disabled)
+        AnimatedOpacity(
+          opacity: isEnabled ? 1.0 : 0.4,
+          duration: const Duration(milliseconds: 200),
+          child: IgnorePointer(
+            ignoring: !isEnabled,
+            child: Row(
+              children: [
+                Expanded(
+                  child: CalcTextField(
+                    label: 'عدد الطبقات',
+                    hint: 'العدد',
+                    prefixIcon: Icons.layers_rounded,
+                    onChanged: (value) {
+                      provider.setFooterLayerCount(double.tryParse(value) ?? 0);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: CalcDropdown<String>(
+                    label: 'النوع',
+                    hint: 'اختر النوع',
+                    value: provider.selectedFooterType,
+                    items: provider.dataProvider.footerTypes.keys.toList(),
+                    itemLabel: (item) => item,
+                    onChanged: (type) => provider.setFooterType(type),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ===== DRESS =====
+  Widget _buildDressSection(
+    BuildContext context,
+    CalculatorProvider provider,
+    bool isDark,
+  ) {
+    return Column(
+      children: [
+        const SectionTitle(title: 'حساب الثوب', icon: Icons.texture_rounded),
+        CalcDropdown<String>(
+          label: 'نوع الثوب',
+          hint: 'اختر نوع الثوب',
+          value: provider.selectedDressType,
+          items: provider.dataProvider.dressTypes.keys.toList(),
+          itemLabel: (item) => item,
+          onChanged: (type) => provider.setDressType(type),
+        ),
+      ],
+    );
+  }
+
+  // ===== SPRINGS SECTION =====
+  Widget _buildSpringsSection(
+    BuildContext context,
+    CalculatorProvider provider,
+    bool isDark,
+  ) {
+    final isEnabled = provider.isSpringEnabled;
+
+    return Column(
+      children: [
+        // Section Title with Toggle
+        Padding(
+          padding: const EdgeInsets.only(top: 28, bottom: 18),
+          child: Row(
+            children: [
+              // Accent line
+              Container(
+                width: 5,
+                height: 36,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      isEnabled ? CalcTheme.primaryStart : Colors.grey,
+                      isEnabled ? CalcTheme.primaryEnd : Colors.grey.shade400,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      (isEnabled ? CalcTheme.primaryStart : Colors.grey)
+                          .withValues(alpha: 0.15),
+                      (isEnabled ? CalcTheme.primaryEnd : Colors.grey)
+                          .withValues(alpha: 0.08),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  Icons.waves_rounded,
+                  color: isEnabled ? CalcTheme.primaryStart : Colors.grey,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  'حساب الروسول',
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w700,
+                    color: isEnabled
+                        ? (isDark
+                              ? CalcTheme.textPrimaryDark
+                              : CalcTheme.textPrimaryLight)
+                        : Colors.grey,
+                    fontFamily: 'Tajawal',
+                  ),
+                ),
+              ),
+              // Toggle Switch
+              Switch(
+                value: isEnabled,
+                onChanged: (value) => provider.setSpringEnabled(value),
+                activeThumbColor: CalcTheme.primaryStart,
+                activeTrackColor: CalcTheme.primaryStart.withValues(alpha: 0.3),
+              ),
+            ],
+          ),
+        ),
+        // Input fields (dimmed when disabled)
+        AnimatedOpacity(
+          opacity: isEnabled ? 1.0 : 0.4,
+          duration: const Duration(milliseconds: 200),
+          child: IgnorePointer(
+            ignoring: !isEnabled,
+            child: CalcDropdown<String>(
+              label: 'نوع الروسول',
+              hint: 'اختر نوع الروسول',
+              value: provider.springType,
+              items: const ['normal', 'sachet'],
+              itemLabel: (item) =>
+                  item == 'normal' ? 'روسول عادي' : 'روسول En Sachet',
+              onChanged: (type) => provider.setSpringType(type ?? 'normal'),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ===== SFIFA COUNTS =====
+  Widget _buildSfifaCountsSection(
+    BuildContext context,
+    CalculatorProvider provider,
+    bool isDark,
+  ) {
+    final isEnabled = provider.isSfifaEnabled;
+
+    return Column(
+      children: [
+        // Section Title with Toggle
+        Padding(
+          padding: const EdgeInsets.only(top: 28, bottom: 18),
+          child: Row(
+            children: [
+              // Accent line
+              Container(
+                width: 5,
+                height: 36,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      isEnabled ? CalcTheme.primaryStart : Colors.grey,
+                      isEnabled ? CalcTheme.primaryEnd : Colors.grey.shade400,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      (isEnabled ? CalcTheme.primaryStart : Colors.grey)
+                          .withValues(alpha: 0.15),
+                      (isEnabled ? CalcTheme.primaryEnd : Colors.grey)
+                          .withValues(alpha: 0.08),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  Icons.linear_scale_rounded,
+                  color: isEnabled ? CalcTheme.primaryStart : Colors.grey,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  'أعداد السفيفة',
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w700,
+                    color: isEnabled
+                        ? (isDark
+                              ? CalcTheme.textPrimaryDark
+                              : CalcTheme.textPrimaryLight)
+                        : Colors.grey,
+                    fontFamily: 'Tajawal',
+                  ),
+                ),
+              ),
+              // Toggle Switch
+              Switch(
+                value: isEnabled,
+                onChanged: (value) => provider.setSfifaEnabled(value),
+                activeThumbColor: CalcTheme.primaryStart,
+                activeTrackColor: CalcTheme.primaryStart.withValues(alpha: 0.3),
+              ),
+            ],
+          ),
+        ),
+        // Input fields (dimmed when disabled)
+        AnimatedOpacity(
+          opacity: isEnabled ? 1.0 : 0.4,
+          duration: const Duration(milliseconds: 200),
+          child: IgnorePointer(
+            ignoring: !isEnabled,
+            child: Column(
+              children: [
+                // Sfifa counts
+                Row(
+                  children: [
+                    Expanded(
+                      child: CalcTextField(
+                        label: 'شريط 36mm',
+                        hint: 'العدد',
+                        initialValue: provider.sfifaNum1.toString(),
+                        onChanged: (value) {
+                          provider.setSfifaNum1(int.tryParse(value) ?? 0);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: CalcTextField(
+                        label: 'شريط 18mm',
+                        hint: 'العدد',
+                        initialValue: provider.sfifaNum2.toString(),
+                        onChanged: (value) {
+                          provider.setSfifaNum2(int.tryParse(value) ?? 0);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: CalcTextField(
+                        label: 'شريط 3D',
+                        hint: 'العدد',
+                        initialValue: provider.sfifaNum3.toString(),
+                        onChanged: (value) {
+                          provider.setSfifaNum3(int.tryParse(value) ?? 0);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Chain and Elastic counts
+                Row(
+                  children: [
+                    Expanded(
+                      child: CalcTextField(
+                        label: 'عدد السلاسل',
+                        hint: 'العدد',
+                        initialValue: provider.numChain.toString(),
+                        onChanged: (value) {
+                          provider.setNumChain(int.tryParse(value) ?? 0);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: CalcTextField(
+                        label: 'عدد المطاط',
+                        hint: 'العدد',
+                        initialValue: provider.numElastic.toString(),
+                        onChanged: (value) {
+                          provider.setNumElastic(int.tryParse(value) ?? 0);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ===== ERRORS CARD =====
+  Widget _buildErrorsCard(CalculatorProvider provider, bool isDark) {
+    return Container(
+      margin: const EdgeInsets.only(top: 24),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: CalcTheme.error.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: CalcTheme.error.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.error_outline_rounded,
+                color: CalcTheme.error,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'تنبيهات',
+                style: TextStyle(
+                  color: CalcTheme.error,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Tajawal',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...provider.validationErrors.map(
+            (error) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: CalcTheme.error,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      error,
+                      style: TextStyle(
+                        color: isDark ? Colors.white70 : Colors.black87,
+                        fontSize: 14,
+                        fontFamily: 'Tajawal',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ===== CALCULATE BUTTON =====
+  Widget _buildCalculateButton(
+    BuildContext context,
+    CalculatorProvider provider,
+  ) {
+    return CalcButton(
+      label: 'احسب السعر النهائي',
+      icon: Icons.calculate_rounded,
+      isLoading: provider.isCalculating,
+      onPressed: () {
+        HapticFeedback.mediumImpact();
+        final result = provider.calculate();
+        if (result != null) {
+          showDialog(
+            context: context,
+            builder: (context) => ResultDialog(result: result),
+          );
+        }
+      },
+    );
+  }
+
+  // ===== RESET BUTTON =====
+  Widget _buildResetButton(BuildContext context, CalculatorProvider provider) {
+    return TextButton.icon(
+      onPressed: () {
+        HapticFeedback.lightImpact();
+        provider.reset();
+      },
+      icon: const Icon(Icons.refresh_rounded, color: Colors.grey),
+      label: const Text(
+        'إعادة تعيين القيم',
+        style: TextStyle(
+          color: Colors.grey,
+          fontFamily: 'Tajawal',
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+      ),
+    );
+  }
+}
+
+// // ===== MESH PATTERN PAINTER =====
+// class _MeshPatternPainter extends CustomPainter {
+//   @override
+//   void paint(Canvas canvas, Size size) {
+//     final paint = Paint()
+//       ..color = Colors.white.withValues(alpha: 0.05)
+//       ..style = PaintingStyle.stroke
+//       ..strokeWidth = 1;
+
+//     const spacing = 20.0;
+
+//     // Draw grid
+//     for (double i = 0; i < size.width; i += spacing) {
+//       canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
+//     }
+//     for (double i = 0; i < size.height; i += spacing) {
+//       canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+//     }
+//   }
+
+//   @override
+//   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+// }
