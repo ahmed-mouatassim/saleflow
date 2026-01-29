@@ -10,24 +10,22 @@ import 'calc_dropdown.dart';
 class SpongeLayerCard extends StatefulWidget {
   final int index;
   final SpongeLayer layer;
-  final double basicHeight; // الطول من الأبعاد الأساسية
-  final double basicWidth; // العرض من الأبعاد الأساسية
-  final List<String> spongeTypesList; // قائمة أنواع الإسفنج من API
   final ValueChanged<String?> onTypeChanged;
   final ValueChanged<double> onLayerCountChanged;
-  final ValueChanged<double> onThicknessChanged; // الارتفاع/السمك
+  final ValueChanged<double> onHeightChanged;
+  final ValueChanged<double> onWidthChanged;
+  final ValueChanged<double> onLengthChanged;
   final VoidCallback onDelete;
 
   const SpongeLayerCard({
     super.key,
     required this.index,
     required this.layer,
-    required this.basicHeight,
-    required this.basicWidth,
-    required this.spongeTypesList,
     required this.onTypeChanged,
     required this.onLayerCountChanged,
-    required this.onThicknessChanged,
+    required this.onHeightChanged,
+    required this.onWidthChanged,
+    required this.onLengthChanged,
     required this.onDelete,
   });
 
@@ -248,7 +246,7 @@ class _SpongeLayerCardState extends State<SpongeLayerCard> {
                             label: 'النوع',
                             hint: 'اختر النوع',
                             value: widget.layer.selectedType,
-                            items: widget.spongeTypesList,
+                            items: CalcConstants.spongeTypes.keys.toList(),
                             itemLabel: (item) => item,
                             onChanged: widget.onTypeChanged,
                             prefixIcon: Icons.category_rounded,
@@ -273,19 +271,57 @@ class _SpongeLayerCardState extends State<SpongeLayerCard> {
                     ),
                     const SizedBox(height: 14),
 
-                    // Thickness Field Only (height/width come from basic dimensions)
-                    CalcTextField(
-                      label: 'سمك الإسفنج',
-                      hint: '0.00',
-                      suffix: 'م',
-                      initialValue: widget.layer.length > 0
-                          ? widget.layer.length.toString()
-                          : '',
-                      prefixIcon: Icons.height_rounded,
-                      onChanged: (value) {
-                        final parsed = double.tryParse(value) ?? 0;
-                        widget.onThicknessChanged(parsed);
-                      },
+                    // Second Row: Dimensions
+                    Row(
+                      children: [
+                        Expanded(
+                          child: CalcTextField(
+                            label: 'الطول',
+                            hint: '0.00',
+                            suffix: 'م',
+                            initialValue: widget.layer.height > 0
+                                ? widget.layer.height.toString()
+                                : '',
+                            prefixIcon: Icons.straighten_rounded,
+                            onChanged: (value) {
+                              final parsed = double.tryParse(value) ?? 0;
+                              widget.onHeightChanged(parsed);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: CalcTextField(
+                            label: 'العرض',
+                            hint: '0.00',
+                            suffix: 'م',
+                            initialValue: widget.layer.width > 0
+                                ? widget.layer.width.toString()
+                                : '',
+                            prefixIcon: Icons.swap_horiz_rounded,
+                            onChanged: (value) {
+                              final parsed = double.tryParse(value) ?? 0;
+                              widget.onWidthChanged(parsed);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: CalcTextField(
+                            label: 'الارتفاع',
+                            hint: '0.00',
+                            suffix: 'م',
+                            initialValue: widget.layer.length > 0
+                                ? widget.layer.length.toString()
+                                : '',
+                            prefixIcon: Icons.height_rounded,
+                            onChanged: (value) {
+                              final parsed = double.tryParse(value) ?? 0;
+                              widget.onLengthChanged(parsed);
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

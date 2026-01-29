@@ -333,8 +333,6 @@ class _CalcScreenContent extends StatelessWidget {
     CalculatorProvider provider,
     bool isDark,
   ) {
-    final dataProvider = context.watch<CalcDataProvider>();
-
     return Column(
       children: [
         const SectionTitle(title: 'طبقات الإسفنج', icon: Icons.layers_rounded),
@@ -347,17 +345,20 @@ class _CalcScreenContent extends StatelessWidget {
           return SpongeLayerCard(
             index: index,
             layer: layer,
-            basicHeight: provider.height, // الطول من الأبعاد الأساسية
-            basicWidth: provider.width, // العرض من الأبعاد الأساسية
-            spongeTypesList: dataProvider.spongeTypes.keys.toList(),
             onTypeChanged: (type) {
               provider.updateSpongeLayer(index, type: type);
             },
             onLayerCountChanged: (count) {
               provider.updateSpongeLayer(index, layerCount: count);
             },
-            onThicknessChanged: (thickness) {
-              provider.updateSpongeLayer(index, length: thickness);
+            onHeightChanged: (height) {
+              provider.updateSpongeLayer(index, height: height);
+            },
+            onWidthChanged: (width) {
+              provider.updateSpongeLayer(index, width: width);
+            },
+            onLengthChanged: (length) {
+              provider.updateSpongeLayer(index, length: length);
             },
             onDelete: () => provider.removeSpongeLayer(index),
           );
