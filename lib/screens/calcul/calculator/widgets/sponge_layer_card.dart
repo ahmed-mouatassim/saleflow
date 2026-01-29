@@ -16,6 +16,7 @@ class SpongeLayerCard extends StatefulWidget {
   final ValueChanged<double> onWidthChanged;
   final ValueChanged<double> onLengthChanged;
   final VoidCallback onDelete;
+  final Map<String, int> spongeTypes;
 
   const SpongeLayerCard({
     super.key,
@@ -27,6 +28,7 @@ class SpongeLayerCard extends StatefulWidget {
     required this.onWidthChanged,
     required this.onLengthChanged,
     required this.onDelete,
+    required this.spongeTypes,
   });
 
   @override
@@ -246,7 +248,7 @@ class _SpongeLayerCardState extends State<SpongeLayerCard> {
                             label: 'النوع',
                             hint: 'اختر النوع',
                             value: widget.layer.selectedType,
-                            items: CalcConstants.spongeTypes.keys.toList(),
+                            items: widget.spongeTypes.keys.toList(),
                             itemLabel: (item) => item,
                             onChanged: widget.onTypeChanged,
                             prefixIcon: Icons.category_rounded,

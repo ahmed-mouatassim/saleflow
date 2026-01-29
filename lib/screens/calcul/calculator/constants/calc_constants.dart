@@ -4,34 +4,8 @@ import 'package:flutter/material.dart';
 /// All static data, colors, and configurations for the calculator
 
 class CalcConstants {
-  // ===== Sponge Types with Coefficients =====
-  static const Map<String, int> spongeTypes = {
-    'D22': 2184,
-    'D20': 1820,
-    'ABS': 2635,
-    'D33': 1490,
-    'HR D35': 4000,
-    'D33+ABS': 1450,
-    'D18': 925,
-  };
-
-  // ===== Footer Information =====
-  static const Map<String, double> footerTypes = {'footer_1m*2': 11.88};
-
-  // ===== Dress Types with Prices =====
-  static const Map<String, double> dressTypes = {
-    'NEWDORSAL': 58,
-    'OCTAVIAa': 58,
-    'ABS': 60,
-    'HR': 60,
-    'ANIR': 50,
-    'ANATALYA': 47,
-    'MARIBELLE': 47,
-    'NAMASTE': 42,
-    'FORMIDABLE': 42,
-    'VERAFLEX': 58,
-    'BAYT EL BADIAA': 50,
-  };
+  // ===== Note: spongeTypes, footerTypes, and dressTypes are now fetched from database =====
+  // See: api.php?endpoint=prices
 
   // ===== Default Values =====
   static const double defaultSpringValue = 0.919;

@@ -1,5 +1,4 @@
 import '../../cost/provider/costs_provider.dart';
-import '../../calculator/constants/calc_constants.dart';
 
 /// خدمة حساب أسعار المراتب
 /// تقوم بحساب السعر الكامل بناءً على الأبعاد ونوع الروسول وعدد الفوتر
@@ -41,10 +40,12 @@ class MattressCalculatorService {
   /// حساب سعر الثوب
   /// [height] الطول بالمتر
   /// [width] العرض بالمتر
-  /// [dressType] نوع الثوب
-  double calculateDressPrice(double height, double width, String dressType) {
-    final dressUnitPrice = CalcConstants.dressTypes[dressType] ?? 50.0;
-
+  /// [dressUnitPrice] سعر الثوب للوحدة
+  double calculateDressPrice(
+    double height,
+    double width,
+    double dressUnitPrice,
+  ) {
     final x1 = width * 3;
     final x2 = (width + height) * 2;
     const x3 = 2 / 0.30;
@@ -78,12 +79,12 @@ class MattressCalculatorService {
     required double width,
     required String springType,
     required int footerCount,
-    required String dressType,
+    required double dressPrice, // سعر الثوب المحسوب مسبقاً
     required double basePrice, // السعر الأساسي من الجدول
   }) {
     final springsPrice = calculateSpringsPrice(height, width, springType);
     final footerPrice = calculateFooterPrice(height, width, footerCount);
-    final dressPrice = calculateDressPrice(height, width, dressType);
+    // dressPrice is already calculated and passed
     final packagingPrice = calculatePackagingPrice();
     final costPrice = calculateCostPrice();
 

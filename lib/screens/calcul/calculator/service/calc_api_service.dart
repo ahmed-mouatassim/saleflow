@@ -10,19 +10,16 @@ import '../models/product_data_model.dart';
 class CalcApiService {
   CalcApiService._();
 
-  /// API Base URL - Change this based on your environment
-  /// For Android Emulator: use 10.0.2.2 instead of localhost
-  /// For iOS Simulator: use localhost
-  /// For Physical Device: use your computer's IP address
+  /// API Base URL
   static String get baseUrl {
     if (kIsWeb) {
-      return 'http://localhost/C:/xampp/htdocs/alidor_backend';
+      return 'https://alidor.ma';
     }
     // For mobile emulators/simulators
     if (Platform.isAndroid) {
-      return 'http://10.0.2.2/alidor_backend';
+      return 'https://alidor.ma';
     }
-    return 'http://localhost/alidor_backend';
+    return 'https://alidor.ma';
   }
 
   /// Request timeout duration
@@ -32,7 +29,7 @@ class CalcApiService {
   static Future<ApiResponse<CalcApiData>> fetchProducts() async {
     try {
       final response = await http
-          .get(Uri.parse('$baseUrl/get_products.php'))
+          .get(Uri.parse('$baseUrl/api.php?endpoint=prices'))
           .timeout(timeout);
 
       if (response.statusCode == 200) {

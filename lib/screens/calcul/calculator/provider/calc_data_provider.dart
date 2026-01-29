@@ -22,28 +22,28 @@ class CalcDataProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   CalcApiData? get apiData => _apiData;
 
-  /// Sponge types - from API or fallback to constants
+  /// Sponge types - from API only
   Map<String, int> get spongeTypes {
     if (_apiData != null && _apiData!.spongeTypes.isNotEmpty) {
       return _apiData!.spongeTypes;
     }
-    return CalcConstants.spongeTypes;
+    return {};
   }
 
-  /// Dress types - from API or fallback to constants
+  /// Dress types - from API only
   Map<String, double> get dressTypes {
     if (_apiData != null && _apiData!.dressTypes.isNotEmpty) {
       return _apiData!.dressTypes;
     }
-    return CalcConstants.dressTypes;
+    return {};
   }
 
-  /// Footer types - from API or fallback to constants
+  /// Footer types - from API only
   Map<String, double> get footerTypes {
     if (_apiData != null && _apiData!.footerTypes.isNotEmpty) {
       return _apiData!.footerTypes;
     }
-    return CalcConstants.footerTypes;
+    return {};
   }
 
   /// Default spring value

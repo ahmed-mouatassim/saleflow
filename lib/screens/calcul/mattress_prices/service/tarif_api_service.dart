@@ -15,16 +15,16 @@ class TarifApiService {
   static DateTime? _cacheTime;
   static const Duration _cacheDuration = Duration(minutes: 5);
 
-  /// API Base URL - Same pattern as CalcApiService
+  /// API Base URL
   static String get baseUrl {
     if (kIsWeb) {
-      return 'https://alidor.ma/api_saleflow';
+      return 'https://alidor.ma';
     }
     // For mobile emulators/simulators
     if (Platform.isAndroid) {
-      return 'https://alidor.ma/api_saleflow';
+      return 'https://alidor.ma';
     }
-    return 'https://alidor.ma/api_saleflow';
+    return 'https://alidor.ma';
   }
 
   /// Request timeout duration
@@ -55,7 +55,7 @@ class TarifApiService {
 
     try {
       final response = await http
-          .get(Uri.parse('$baseUrl/get_tarif_details.php'))
+          .get(Uri.parse('$baseUrl/api.php?endpoint=tarif'))
           .timeout(timeout);
 
       if (response.statusCode == 200) {
@@ -106,6 +106,24 @@ class TarifApiService {
     } catch (e) {
       debugPrint('TarifApiService.fetchTarifDetails error: $e');
       return TarifApiResponse(success: false, message: 'حدث خطأ غير متوقع: $e');
+    }
+  }
+
+  /// Check database connection
+  static Future<bool> checkConnection() async {
+    try {
+      final response = await http
+          .get(Uri.parse('$baseUrl/api.php'))
+          .timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        return json['success'] == true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Connection check failed: $e');
+      return false;
     }
   }
 

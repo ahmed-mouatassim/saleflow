@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'provider/calculator_provider.dart';
-import 'provider/calc_data_provider.dart';
 import 'constants/calc_constants.dart';
 import 'widgets/calc_button.dart';
 import 'widgets/calc_dropdown.dart';
@@ -361,6 +360,7 @@ class _CalcScreenContent extends StatelessWidget {
               provider.updateSpongeLayer(index, length: length);
             },
             onDelete: () => provider.removeSpongeLayer(index),
+            spongeTypes: provider.dataProvider.spongeTypes,
           );
         }),
 
