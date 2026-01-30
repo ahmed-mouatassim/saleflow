@@ -17,11 +17,12 @@ class Database {
     private static $instance = null;
     private $connection;
     
-    // إعدادات قاعدة البيانات
+    // إعدادات قاعدة البيانات - cPanel
+    // ملاحظة: يجب تحديث كلمة المرور الفعلية من cPanel
     private $host = 'localhost';  
-    private $username = 'alidorma_saleflow_user';
-    private $password = '159632003saleflow';
-    private $database = 'alidorma_saleflow';
+    private $username = 'alidorma_saleflow_user'; // اسم مستخدم قاعدة البيانات في cPanel
+    private $password = '159632003saleflow';                  // ← ضع كلمة مرور قاعدة البيانات هنا
+    private $database = 'alidorma_saleflow'; // اسم قاعدة البيانات في cPanel
     private $charset = 'utf8mb4';
     
     // Private constructor لمنع إنشاء نسخ متعددة

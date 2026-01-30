@@ -17,14 +17,15 @@ class TarifApiService {
 
   /// API Base URL
   static String get baseUrl {
-    if (kIsWeb) {
-      return 'http://localhost/saleflow_APIs/public_html';
+    // Production: cPanel server
+    const productionUrl = 'https://alidor.ma';
+
+    // ملاحظة: للتطوير المحلي، غير useProduction إلى false
+    const useProduction = true;
+
+    if (useProduction) {
+      return productionUrl;
     }
-    // For mobile emulators/simulators
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2/saleflow_APIs/public_html';
-    }
-    return 'http://localhost/saleflow_APIs/public_html';
   }
 
   /// Request timeout duration

@@ -17,10 +17,17 @@ header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('X-XSS-Protection: 1; mode=block');
 
+// منع التخزين المؤقت (Cache)
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Cache-Control: post-check=0, pre-check=0', false);
+header('Pragma: no-cache');
+
 // CORS Headers
 $allowed_origins = [
-    'https://yourdomain.com',
-    'https://www.yourdomain.com',
+    'https://alidor.ma',
+    'https://www.alidor.ma',
+    'http://alidor.ma',
+    'http://www.alidor.ma',
     'http://localhost:3000',
     'http://localhost:8080',
     '*' // للتطوير - قم بإزالتها في الإنتاج
@@ -128,10 +135,10 @@ $endpoint = preg_replace('/[^a-zA-Z0-9_-]/', '', $endpoint); // تنظيف ال�
 // مسار مجلد الـ APIs
 $api_base_path = __DIR__ . '/../private/apis/';
 
-// قائمة الـ Endpoints المتاحة
+// قائمة الـ Endpoints المتاحة (المسارات للملفات الرئيسية داخل المجلدات)
 $available_endpoints = [
-    'tarif' => 'tarif.php',
-    'prices' => 'prices.php',
+    'tarif' => 'tarif/tarif.php',
+    'prices' => 'prices/prices.php',
     'auth' => 'auth.php',
     'products' => 'products.php',
     'orders' => 'orders.php',
@@ -143,7 +150,7 @@ if (empty($endpoint)) {
     jsonResponse([
         'success' => true,
         'message' => 'مرحباً بك في SaleFlow API',
-        'version' => '2.0.0',
+        'version' => '2.1.0',
         'available_endpoints' => array_keys($available_endpoints),
         'usage' => 'api.php?endpoint={name}',
         'documentation' => [
@@ -152,6 +159,12 @@ if (empty($endpoint)) {
                 'POST' => 'Create new tarif',
                 'PUT' => 'Update existing tarif',
                 'DELETE' => 'Delete tarif by id'
+            ],
+            'prices' => [
+                'GET' => 'Get all prices/costs grouped by name/type, or by id/type',
+                'POST' => 'Create new price/cost { name, type, price, edite_by }',
+                'PUT' => 'Update price/cost { id OR (name+type), price, edite_by }',
+                'DELETE' => 'Delete price/cost by id or (name+type)'
             ]
         ]
     ], 200);

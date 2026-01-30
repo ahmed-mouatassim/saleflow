@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'provider/calculator_provider.dart';
+import 'provider/calc_data_provider.dart';
 import 'constants/calc_constants.dart';
 import 'widgets/calc_button.dart';
 import 'widgets/calc_dropdown.dart';
@@ -33,6 +34,12 @@ class _CalcScreenContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final provider = context.watch<CalculatorProvider>();
+    // Watch CalcDataProvider to rebuild when API data loads (sponge/dress types)
+    final dataProvider = context.watch<CalcDataProvider>();
+    // Debug: Show loading state
+    if (dataProvider.isLoading) {
+      debugPrint('CalcScreen: Loading data from API...');
+    }
 
     return Scaffold(
       backgroundColor: Colors.transparent, // Backed by home background
@@ -331,9 +338,95 @@ class _CalcScreenContent extends StatelessWidget {
     CalculatorProvider provider,
     bool isDark,
   ) {
+    final dataProvider = context.watch<CalcDataProvider>();
+    final spongeTypes = dataProvider.spongeTypes;
+    final isLoading = dataProvider.isLoading;
+
     return Column(
       children: [
         const SectionTitle(title: 'طبقات الإسفنج', icon: Icons.layers_rounded),
+
+        // Show loading indicator if no sponge types and is loading
+        if (isLoading && spongeTypes.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: CalcTheme.primaryStart.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      CalcTheme.primaryStart,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'جاري تحميل أنواع الإسفنج...',
+                  style: TextStyle(
+                    color: isDark
+                        ? CalcTheme.textSecondaryDark
+                        : CalcTheme.textSecondaryLight,
+                    fontFamily: 'Tajawal',
+                  ),
+                ),
+              ],
+            ),
+          )
+        else if (spongeTypes.isEmpty && !isLoading)
+          Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: CalcTheme.error.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: CalcTheme.error.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  color: CalcTheme.error,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'لم يتم تحميل أنواع الإسفنج',
+                  style: TextStyle(
+                    color: CalcTheme.error.withValues(alpha: 0.8),
+                    fontFamily: 'Tajawal',
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => dataProvider.refresh(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: CalcTheme.primaryStart,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'إعادة المحاولة',
+                      style: TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
 
         // Layer Cards
         ...provider.spongeLayers.asMap().entries.map((entry) {
@@ -359,7 +452,7 @@ class _CalcScreenContent extends StatelessWidget {
               provider.updateSpongeLayer(index, length: length);
             },
             onDelete: () => provider.removeSpongeLayer(index),
-            spongeTypes: provider.dataProvider.spongeTypes,
+            spongeTypes: spongeTypes,
           );
         }),
 
@@ -428,6 +521,8 @@ class _CalcScreenContent extends StatelessWidget {
     bool isDark,
   ) {
     final isEnabled = provider.isFooterEnabled;
+    final dataProvider = context.watch<CalcDataProvider>();
+    final footerTypes = dataProvider.footerTypes;
 
     return Column(
       children: [
@@ -524,7 +619,7 @@ class _CalcScreenContent extends StatelessWidget {
                     label: 'النوع',
                     hint: 'اختر النوع',
                     value: provider.selectedFooterType,
-                    items: provider.dataProvider.footerTypes.keys.toList(),
+                    items: footerTypes.keys.toList(),
                     itemLabel: (item) => item,
                     onChanged: (type) => provider.setFooterType(type),
                   ),
@@ -543,17 +638,100 @@ class _CalcScreenContent extends StatelessWidget {
     CalculatorProvider provider,
     bool isDark,
   ) {
+    final dataProvider = context.watch<CalcDataProvider>();
+    final dressTypes = dataProvider.dressTypes;
+    final isLoading = dataProvider.isLoading;
+
     return Column(
       children: [
         const SectionTitle(title: 'حساب الثوب', icon: Icons.texture_rounded),
-        CalcDropdown<String>(
-          label: 'نوع الثوب',
-          hint: 'اختر نوع الثوب',
-          value: provider.selectedDressType,
-          items: provider.dataProvider.dressTypes.keys.toList(),
-          itemLabel: (item) => item,
-          onChanged: (type) => provider.setDressType(type),
-        ),
+        if (isLoading && dressTypes.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: CalcTheme.primaryStart.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      CalcTheme.primaryStart,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'جاري تحميل أنواع الثوب...',
+                  style: TextStyle(
+                    color: isDark
+                        ? CalcTheme.textSecondaryDark
+                        : CalcTheme.textSecondaryLight,
+                    fontFamily: 'Tajawal',
+                  ),
+                ),
+              ],
+            ),
+          )
+        else if (dressTypes.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: CalcTheme.error.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: CalcTheme.error.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  color: CalcTheme.error,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'لم يتم تحميل أنواع الثوب',
+                  style: TextStyle(
+                    color: CalcTheme.error.withValues(alpha: 0.8),
+                    fontFamily: 'Tajawal',
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => dataProvider.refresh(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: CalcTheme.primaryStart,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'إعادة المحاولة',
+                      style: TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          CalcDropdown<String>(
+            label: 'نوع الثوب',
+            hint: 'اختر نوع الثوب',
+            value: provider.selectedDressType,
+            items: dressTypes.keys.toList(),
+            itemLabel: (item) => item,
+            onChanged: (type) => provider.setDressType(type),
+          ),
       ],
     );
   }

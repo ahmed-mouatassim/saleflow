@@ -11,14 +11,23 @@ class CostsApiService {
 
   /// API Base URL
   static String get baseUrl {
-    if (kIsWeb) {
+    // Production: cPanel server
+    const productionUrl = 'https://alidor.ma';
+
+    // Development: Local server
+    if (kDebugMode) {
+      if (kIsWeb) {
+        return 'http://localhost/saleflow_APIs/public_html';
+      }
+      // For mobile emulators/simulators
+      if (Platform.isAndroid) {
+        return 'http://10.0.2.2/saleflow_APIs/public_html';
+      }
       return 'http://localhost/saleflow_APIs/public_html';
     }
-    // For mobile emulators/simulators
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2/saleflow_APIs/public_html';
-    }
-    return 'http://localhost/saleflow_APIs/public_html';
+
+    // Production mode
+    return productionUrl;
   }
 
   /// Request timeout duration

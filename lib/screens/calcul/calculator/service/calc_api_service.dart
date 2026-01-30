@@ -12,14 +12,9 @@ class CalcApiService {
 
   /// API Base URL
   static String get baseUrl {
-    if (kIsWeb) {
-      return 'http://localhost/saleflow_APIs/public_html';
-    }
-    // For mobile emulators/simulators
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2/saleflow_APIs/public_html';
-    }
-    return 'http://localhost/saleflow_APIs/public_html';
+    // Production: cPanel server
+    // Always use production URL since local server is not configured
+    return 'https://alidor.ma';
   }
 
   /// Request timeout duration
