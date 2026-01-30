@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import '../constants/calc_constants.dart';
+
 import '../models/product_data_model.dart';
 import '../service/calc_api_service.dart';
 
 /// ===== Calculator Data Provider =====
 /// Manages product data from API with fallback to static constants
 class CalcDataProvider extends ChangeNotifier {
+  CalcDataProvider() {
+    loadData();
+  }
   // Loading state
   bool _isLoading = false;
   bool _isLoaded = false;
@@ -48,123 +51,72 @@ class CalcDataProvider extends ChangeNotifier {
 
   /// Default spring value
   double get defaultSpringValue {
-    return _apiData?.getDefault(
-          'defaultSpringValue',
-          CalcConstants.defaultSpringValue,
-        ) ??
-        CalcConstants.defaultSpringValue;
+    return _apiData?.getDefault('defaultSpringValue', 0.0) ?? 0.0;
   }
 
   /// Default ribbon 36mm price
   double get defaultRibbon36mm {
-    return _apiData?.getDefault(
-          'defaultRibbon36mm',
-          CalcConstants.defaultRibbon36mm,
-        ) ??
-        CalcConstants.defaultRibbon36mm;
+    return _apiData?.getDefault('defaultRibbon36mm', 0.0) ?? 0.0;
   }
 
   /// Default ribbon 18mm price
   double get defaultRibbon18mm {
-    return _apiData?.getDefault(
-          'defaultRibbon18mm',
-          CalcConstants.defaultRibbon18mm,
-        ) ??
-        CalcConstants.defaultRibbon18mm;
+    return _apiData?.getDefault('defaultRibbon18mm', 0.0) ?? 0.0;
   }
 
   /// Default ribbon 3D price
   double get defaultRibbon3D {
-    return _apiData?.getDefault(
-          'defaultRibbon3D',
-          CalcConstants.defaultRibbon3D,
-        ) ??
-        CalcConstants.defaultRibbon3D;
+    return _apiData?.getDefault('defaultRibbon3D', 0.0) ?? 0.0;
   }
 
   /// Default chain price
   double get defaultChainPrice {
-    return _apiData?.getDefault(
-          'defaultChainPrice',
-          CalcConstants.defaultChainPrice,
-        ) ??
-        CalcConstants.defaultChainPrice;
+    return _apiData?.getDefault('defaultChainPrice', 0.0) ?? 0.0;
   }
 
   /// Default elastic price
   double get defaultElasticPrice {
-    return _apiData?.getDefault(
-          'defaultElasticPrice',
-          CalcConstants.defaultElasticPrice,
-        ) ??
-        CalcConstants.defaultElasticPrice;
+    return _apiData?.getDefault('defaultElasticPrice', 0.0) ?? 0.0;
   }
 
   /// Default corners
   double get defaultCorners {
-    return _apiData?.getDefault(
-          'defaultCorners',
-          CalcConstants.defaultCorners,
-        ) ??
-        CalcConstants.defaultCorners;
+    return _apiData?.getDefault('defaultCorners', 0.0) ?? 0.0;
   }
 
   /// Default tickets
   double get defaultTickets {
-    return _apiData?.getDefault(
-          'defaultTickets',
-          CalcConstants.defaultTickets,
-        ) ??
-        CalcConstants.defaultTickets;
+    return _apiData?.getDefault('defaultTickets', 0.0) ?? 0.0;
   }
 
   /// Default plastic
   double get defaultPlastic {
-    return _apiData?.getDefault(
-          'defaultPlastic',
-          CalcConstants.defaultPlastic,
-        ) ??
-        CalcConstants.defaultPlastic;
+    return _apiData?.getDefault('defaultPlastic', 0.0) ?? 0.0;
   }
 
   /// Default rent
   double get defaultRent {
-    return _apiData?.getDefault('defaultRent', CalcConstants.defaultRent) ??
-        CalcConstants.defaultRent;
+    return _apiData?.getDefault('defaultRent', 0.0) ?? 0.0;
   }
 
   /// Default employees
   double get defaultEmployees {
-    return _apiData?.getDefault(
-          'defaultEmployees',
-          CalcConstants.defaultEmployees,
-        ) ??
-        CalcConstants.defaultEmployees;
+    return _apiData?.getDefault('defaultEmployees', 0.0) ?? 0.0;
   }
 
   /// Default diesel
   double get defaultDiesel {
-    return _apiData?.getDefault('defaultDiesel', CalcConstants.defaultDiesel) ??
-        CalcConstants.defaultDiesel;
+    return _apiData?.getDefault('defaultDiesel', 0.0) ?? 0.0;
   }
 
   /// Default electricity
   double get defaultElectricity {
-    return _apiData?.getDefault(
-          'defaultElectricity',
-          CalcConstants.defaultElectricity,
-        ) ??
-        CalcConstants.defaultElectricity;
+    return _apiData?.getDefault('defaultElectricity', 0.0) ?? 0.0;
   }
 
   /// Default production
   int get defaultProduction {
-    final value =
-        _apiData?.getDefault(
-          'defaultProduction',
-          CalcConstants.defaultProduction.toDouble(),
-        ) ??
-        CalcConstants.defaultProduction.toDouble();
+    final value = _apiData?.getDefault('defaultProduction', 0.0) ?? 0.0;
     return value.toInt();
   }
 

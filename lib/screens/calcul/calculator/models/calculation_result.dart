@@ -8,6 +8,8 @@ class CalculationResult {
   final double packagingPrice;
   final double costPrice;
   final double spongePrice;
+  final double profitMargin;
+  final double profitAmount;
   final double finalPrice;
 
   const CalculationResult({
@@ -18,6 +20,8 @@ class CalculationResult {
     required this.packagingPrice,
     required this.costPrice,
     required this.spongePrice,
+    required this.profitMargin,
+    required this.profitAmount,
     required this.finalPrice,
   });
 }

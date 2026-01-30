@@ -12,6 +12,7 @@ class TarifModel {
   final double footerPrice;
   final double packagingPrice;
   final double costPrice;
+  final double profitPrice;
   final double finalPrice;
 
   const TarifModel({
@@ -26,6 +27,7 @@ class TarifModel {
     this.footerPrice = 0,
     this.packagingPrice = 0,
     this.costPrice = 0,
+    this.profitPrice = 0,
     this.finalPrice = 0,
   });
 
@@ -43,11 +45,12 @@ class TarifModel {
       footerPrice: (json['footer_price'] as num?)?.toDouble() ?? 0,
       packagingPrice: (json['packaging_price'] as num?)?.toDouble() ?? 0,
       costPrice: (json['cost_price'] as num?)?.toDouble() ?? 0,
+      profitPrice: (json['profit_price'] as num?)?.toDouble() ?? 0,
       finalPrice: (json['final_price'] as num?)?.toDouble() ?? 0,
     );
   }
 
-  /// Get total price (sum of all components)
+  /// Get total price (sum of all components excluding profit)
   double get totalComponents =>
       spongePrice +
       springsPrice +
@@ -70,6 +73,7 @@ class TarifModel {
     'footer_price': footerPrice,
     'packaging_price': packagingPrice,
     'cost_price': costPrice,
+    'profit_price': profitPrice,
     'final_price': finalPrice,
   };
 

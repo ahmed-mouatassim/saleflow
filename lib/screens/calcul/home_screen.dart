@@ -9,6 +9,7 @@ import 'cost/costs_screen.dart';
 import 'cost/provider/costs_provider.dart';
 import 'mattress_prices/mattress_prices_screen.dart';
 import 'mattress_prices/constants/mattress_prices_theme.dart';
+import 'materials/materials_management_screen.dart';
 
 /// Home Screen - Main Tabbed Navigation
 /// Provides tabbed navigation between Calculator, Prices Table, and Costs
@@ -60,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => CalcDataProvider()..loadData()),
+        ChangeNotifierProvider(create: (_) => CalcDataProvider()),
         ChangeNotifierProxyProvider<CalcDataProvider, CalculatorProvider>(
           create: (context) => CalculatorProvider(
             costsProvider: context.read<CostsProvider>(),
@@ -121,54 +122,89 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildTabBar(List<Color> currentGradient) {
     return Container(
       margin: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        indicator: BoxDecoration(
-          gradient: LinearGradient(colors: currentGradient),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: currentGradient[0].withValues(alpha: 0.4),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+      child: Row(
+        children: [
+          // زر إدارة المواد
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MaterialsManagementScreen(),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+              ),
+              child: const Icon(
+                Icons.settings_rounded,
+                color: Colors.white70,
+                size: 24,
+              ),
             ),
-          ],
-        ),
-        indicatorSize: TabBarIndicatorSize.tab,
-        indicatorPadding: const EdgeInsets.all(4),
-        dividerColor: Colors.transparent,
-        labelColor: Colors.white,
-        unselectedLabelColor: Colors.white.withValues(alpha: 0.6),
-        labelStyle: const TextStyle(
-          fontFamily: 'Tajawal',
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontFamily: 'Tajawal',
-          fontWeight: FontWeight.normal,
-          fontSize: 12,
-        ),
-        tabs: [
-          _buildTab(
-            icon: Icons.calculate_rounded,
-            label: 'الحاسبة',
-            isSelected: _tabController.index == 0,
           ),
-          _buildTab(
-            icon: Icons.table_chart_rounded,
-            label: 'الأسعار',
-            isSelected: _tabController.index == 1,
-          ),
-          _buildTab(
-            icon: Icons.account_balance_wallet_rounded,
-            label: 'التكاليف',
-            isSelected: _tabController.index == 2,
+          const SizedBox(width: 8),
+          // Tab Bar
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  gradient: LinearGradient(colors: currentGradient),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: currentGradient[0].withValues(alpha: 0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                indicatorPadding: const EdgeInsets.all(4),
+                dividerColor: Colors.transparent,
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white.withValues(alpha: 0.6),
+                labelStyle: const TextStyle(
+                  fontFamily: 'Tajawal',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontFamily: 'Tajawal',
+                  fontWeight: FontWeight.normal,
+                  fontSize: 12,
+                ),
+                tabs: [
+                  _buildTab(
+                    icon: Icons.calculate_rounded,
+                    label: 'الحاسبة',
+                    isSelected: _tabController.index == 0,
+                  ),
+                  _buildTab(
+                    icon: Icons.table_chart_rounded,
+                    label: 'الأسعار',
+                    isSelected: _tabController.index == 1,
+                  ),
+                  _buildTab(
+                    icon: Icons.account_balance_wallet_rounded,
+                    label: 'التكاليف',
+                    isSelected: _tabController.index == 2,
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

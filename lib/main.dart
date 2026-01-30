@@ -23,9 +23,9 @@ import 'screens/calcul/home_screen.dart' as calcul;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // تحميل التكاليف المحفوظة للآلة الحاسبة
+  // تحميل التكاليف من API
   final costsProvider = CostsProvider();
-  await costsProvider.loadFromPreferences();
+  await costsProvider.fetchCosts();
 
   runApp(
     ChangeNotifierProvider.value(

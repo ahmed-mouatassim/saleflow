@@ -18,13 +18,13 @@ class TarifApiService {
   /// API Base URL
   static String get baseUrl {
     if (kIsWeb) {
-      return 'https://alidor.ma';
+      return 'http://localhost/saleflow_APIs/public_html';
     }
     // For mobile emulators/simulators
     if (Platform.isAndroid) {
-      return 'https://alidor.ma';
+      return 'http://10.0.2.2/saleflow_APIs/public_html';
     }
-    return 'https://alidor.ma';
+    return 'http://localhost/saleflow_APIs/public_html';
   }
 
   /// Request timeout duration
@@ -161,6 +161,154 @@ class TarifApiService {
       return _cachedData!.firstWhere((t) => t.name == name && t.size == size);
     } catch (_) {
       return null;
+    }
+  }
+
+  /// Save new tarif to database
+  static Future<TarifApiResponse> saveTarif({
+    required String name,
+    required String size,
+    required double spongePrice,
+    required double springsPrice,
+    required double dressPrice,
+    required double sfifaPrice,
+    required double packagingPrice,
+    required double footerPrice,
+    required double costPrice,
+    required double profitPrice,
+    required double finalPrice,
+    String? refMattress,
+  }) async {
+    try {
+      // Clear cache to ensure next fetch gets the new data
+      clearCache();
+
+      // Generate a reference if not provided
+      final ref = refMattress ?? 'REF-${DateTime.now().millisecondsSinceEpoch}';
+
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/api.php?endpoint=tarif'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'ref_mattress': ref,
+              'name': name,
+              'size': size,
+              'sponge_price': spongePrice,
+              'springs_price': springsPrice,
+              'dress_price': dressPrice,
+              'sfifa_price': sfifaPrice,
+              'packaging_price': packagingPrice,
+              'footer_price': footerPrice,
+              'cost_price': costPrice,
+              'profit_price': profitPrice,
+              'final_price': finalPrice,
+            }),
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final json = jsonDecode(response.body);
+        return TarifApiResponse(
+          success: json['success'] == true,
+          message: json['message'],
+        );
+      } else {
+        return TarifApiResponse(
+          success: false,
+          message: 'فشل في الاتصال بالخادم: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      debugPrint('TarifApiService.saveTarif error: $e');
+      return TarifApiResponse(success: false, message: 'حدث خطأ: $e');
+    }
+  }
+
+  /// Update existing tarif in database
+  static Future<TarifApiResponse> updateTarif({
+    required int id,
+    required String name,
+    required String size,
+    required double spongePrice,
+    required double springsPrice,
+    required double dressPrice,
+    required double sfifaPrice,
+    required double packagingPrice,
+    required double footerPrice,
+    required double costPrice,
+    required double profitPrice,
+    required double finalPrice,
+    String? refMattress,
+  }) async {
+    try {
+      // Clear cache to ensure next fetch gets the updated data
+      clearCache();
+
+      final response = await http
+          .put(
+            Uri.parse('$baseUrl/api.php?endpoint=tarif'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'id': id,
+              'ref_mattress': refMattress ?? 'REF-$id',
+              'name': name,
+              'size': size,
+              'sponge_price': spongePrice,
+              'springs_price': springsPrice,
+              'dress_price': dressPrice,
+              'sfifa_price': sfifaPrice,
+              'packaging_price': packagingPrice,
+              'footer_price': footerPrice,
+              'cost_price': costPrice,
+              'profit_price': profitPrice,
+              'final_price': finalPrice,
+            }),
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        return TarifApiResponse(
+          success: json['success'] == true,
+          message: json['message'] ?? 'تم التحديث بنجاح',
+        );
+      } else {
+        return TarifApiResponse(
+          success: false,
+          message: 'فشل في الاتصال بالخادم: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return TarifApiResponse(success: false, message: 'حدث خطأ: $e');
+    }
+  }
+
+  /// Delete tarif from database
+  static Future<TarifApiResponse> deleteTarif(int id) async {
+    try {
+      // Clear cache to ensure next fetch gets the updated data
+      clearCache();
+
+      final response = await http
+          .delete(Uri.parse('$baseUrl/api.php?endpoint=tarif&id=$id'))
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        return TarifApiResponse(
+          success: json['success'] == true,
+          message: json['message'] ?? 'تم الحذف بنجاح',
+        );
+      } else {
+        return TarifApiResponse(
+          success: false,
+          message: 'فشل في الاتصال بالخادم: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      debugPrint('TarifApiService.deleteTarif error: $e');
+      return TarifApiResponse(success: false, message: 'حدث خطأ: $e');
     }
   }
 }

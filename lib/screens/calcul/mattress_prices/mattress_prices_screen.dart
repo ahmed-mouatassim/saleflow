@@ -122,11 +122,13 @@ class _MattressPricesScreenState extends State<MattressPricesScreen>
 
   /// الحصول على بيانات التعريفة لاسم ومقاس معين
   TarifModel? _getTarif(String name, String size) {
-    try {
-      return _tarifData.firstWhere((t) => t.name == name && t.size == size);
-    } catch (_) {
-      return null;
+    final index = _tarifData.indexWhere(
+      (t) => t.name == name && t.size == size,
+    );
+    if (index != -1) {
+      return _tarifData[index];
     }
+    return null;
   }
 
   /// الحصول على متحكم التمرير للصف بشكل آمن
@@ -750,6 +752,82 @@ class _MattressPricesScreenState extends State<MattressPricesScreen>
     );
   }
 
+  /// تأكيد الحذف
+  Future<void> _confirmDelete(TarifModel tarif) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'تأكيد الحذف',
+          style: TextStyle(fontFamily: 'Tajawal', fontWeight: FontWeight.bold),
+          textAlign: TextAlign.right,
+        ),
+        content: Text(
+          'هل أنت متأكد من حذف تسعيرة "${tarif.name}" مقاس ${tarif.size}؟',
+          style: const TextStyle(fontFamily: 'Tajawal'),
+          textAlign: TextAlign.right,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('إلغاء', style: TextStyle(fontFamily: 'Tajawal')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'حذف',
+              style: TextStyle(fontFamily: 'Tajawal', color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context); // إغلاق BottomSheet إذا كان مفتوحاً
+      }
+
+      setState(() => _isLoading = true);
+
+      try {
+        final response = await TarifApiService.deleteTarif(tarif.id);
+
+        if (mounted) {
+          setState(() => _isLoading = false);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                response.message ??
+                    (response.success ? 'تم الحذف بنجاح' : 'فشل الحذف'),
+                style: const TextStyle(fontFamily: 'Tajawal'),
+              ),
+              backgroundColor: response.success ? Colors.green : Colors.red,
+            ),
+          );
+
+          if (response.success) {
+            _loadData(forceRefresh: true);
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'خطأ: $e',
+                style: const TextStyle(fontFamily: 'Tajawal'),
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   /// عند النقر على خلية - عرض تفاصيل من قاعدة البيانات
   void _onCellTap(TarifModel tarif, String mattressName, String size) {
     HapticFeedback.lightImpact();
@@ -906,6 +984,12 @@ class _MattressPricesScreenState extends State<MattressPricesScreen>
                       tarif.costPrice,
                       Icons.receipt_long_rounded,
                     ),
+                    if (tarif.profitPrice > 0)
+                      _buildPriceRow(
+                        'هامش الربح',
+                        tarif.profitPrice,
+                        Icons.trending_up_rounded,
+                      ),
                     const Divider(
                       height: 32,
                       color: MattressPricesTheme.cellBorder,
@@ -927,6 +1011,7 @@ class _MattressPricesScreenState extends State<MattressPricesScreen>
               children: [
                 // زر الموافقة
                 Expanded(
+                  flex: 2,
                   child: ElevatedButton.icon(
                     onPressed: () {
                       Navigator.pop(context);
@@ -947,21 +1032,22 @@ class _MattressPricesScreenState extends State<MattressPricesScreen>
                         ),
                       );
                     },
-                    icon: const Icon(Icons.check_rounded),
-                    label: const Text('موافقة'),
+                    icon: const Icon(Icons.check_rounded, size: 18),
+                    label: const Text('موافقة', style: TextStyle(fontSize: 13)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 // زر التعديل
                 Expanded(
+                  flex: 2,
                   child: ElevatedButton.icon(
                     onPressed: () {
                       Navigator.pop(context);
@@ -980,16 +1066,37 @@ class _MattressPricesScreenState extends State<MattressPricesScreen>
                         widget.onSwitchToCalculator!();
                       }
                     },
-                    icon: const Icon(Icons.edit_rounded),
-                    label: const Text('تعديل'),
+                    icon: const Icon(Icons.edit_rounded, size: 18),
+                    label: const Text('تعديل', style: TextStyle(fontSize: 13)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: MattressPricesTheme.primaryStart,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // زر الحذف
+                Expanded(
+                  flex: 1,
+                  child: ElevatedButton(
+                    onPressed: () => _confirmDelete(tarif),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.withValues(alpha: 0.1),
+                      foregroundColor: Colors.red,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: Colors.red.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Icon(Icons.delete_outline_rounded, size: 22),
                   ),
                 ),
               ],

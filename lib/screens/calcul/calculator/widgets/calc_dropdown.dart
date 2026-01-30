@@ -60,8 +60,10 @@ class _CalcDropdownState<T> extends State<CalcDropdown<T>> {
           });
         },
         child: DropdownButtonFormField<T>(
-          initialValue: widget.value,
-          items: widget.items.map((T item) {
+          initialValue: widget.items.contains(widget.value)
+              ? widget.value
+              : null,
+          items: widget.items.toSet().toList().map((T item) {
             return DropdownMenuItem<T>(
               value: item,
               child: Text(
@@ -155,7 +157,10 @@ class _CalcDropdownState<T> extends State<CalcDropdown<T>> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: CalcTheme.primaryStart, width: 2),
+              borderSide: const BorderSide(
+                color: CalcTheme.primaryStart,
+                width: 2,
+              ),
             ),
           ),
           dropdownColor: isDark

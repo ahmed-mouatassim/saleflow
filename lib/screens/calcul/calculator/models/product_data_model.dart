@@ -1,5 +1,6 @@
 /// ===== Product Data Model =====
 /// Models for API data from the products table
+library;
 
 /// Single product from database
 class ProductData {
@@ -95,16 +96,27 @@ class CalcApiData {
       sfifa[key] = value is double ? value : double.parse(value.toString());
     });
 
-    // Parse packaging defaults
-    final packagingRaw =
-        json['packagingDefaults'] as Map<String, dynamic>? ?? {};
+    // إضافة spring إلى sfifa (من API الجديد)
+    final springRaw = json['spring'] as Map<String, dynamic>? ?? {};
+    springRaw.forEach((key, value) {
+      sfifa[key] = value is double ? value : double.parse(value.toString());
+    });
+
+    // Parse packaging defaults - دعم كلا الاسمين
+    final packagingKey = json.containsKey('Packaging Defaults')
+        ? 'Packaging Defaults'
+        : 'packagingDefaults';
+    final packagingRaw = json[packagingKey] as Map<String, dynamic>? ?? {};
     final packaging = <String, double>{};
     packagingRaw.forEach((key, value) {
       packaging[key] = value is double ? value : double.parse(value.toString());
     });
 
-    // Parse cost defaults
-    final costRaw = json['costDefaults'] as Map<String, dynamic>? ?? {};
+    // Parse cost defaults - دعم كلا الاسمين
+    final costKey = json.containsKey('Cost Defaults')
+        ? 'Cost Defaults'
+        : 'costDefaults';
+    final costRaw = json[costKey] as Map<String, dynamic>? ?? {};
     final cost = <String, double>{};
     costRaw.forEach((key, value) {
       cost[key] = value is double ? value : double.parse(value.toString());

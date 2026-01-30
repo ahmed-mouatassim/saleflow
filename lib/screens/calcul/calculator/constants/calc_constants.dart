@@ -8,12 +8,12 @@ class CalcConstants {
   // See: api.php?endpoint=prices
 
   // ===== Default Values =====
-  static const double defaultSpringValue = 0.919;
-  static const double defaultRibbon36mm = 0.55;
-  static const double defaultRibbon18mm = 0.35;
-  static const double defaultRibbon3D = 2.50;
-  static const double defaultChainPrice = 8.0;
-  static const double defaultElasticPrice = 1.5;
+  static const double defaultSpringValue = 0.0;
+  static const double defaultRibbon36mm = 0.0;
+  static const double defaultRibbon18mm = 0.0;
+  static const double defaultRibbon3D = 0.0;
+  static const double defaultChainPrice = 0.0;
+  static const double defaultElasticPrice = 0.0;
   static const int defaultSfifaNum1 = 3;
   static const int defaultSfifaNum2 = 2;
   static const int defaultSfifaNum3 = 1;
@@ -21,27 +21,27 @@ class CalcConstants {
   static const int defaultNumElastic = 0;
 
   // Packaging Defaults
-  static const double defaultCorners = 6.5;
-  static const double defaultTickets = 3.20;
-  static const double defaultLargeFlyer = 2.20;
-  static const double defaultSmallFlyer = 1.40;
-  static const double defaultPlastic = 20.0;
-  static const double defaultScotch = 3.0;
-  static const double defaultGlue = 17.0;
+  static const double defaultCorners = 0.0;
+  static const double defaultTickets = 0.0;
+  static const double defaultLargeFlyer = 0.0;
+  static const double defaultSmallFlyer = 0.0;
+  static const double defaultPlastic = 0.0;
+  static const double defaultScotch = 0.0;
+  static const double defaultGlue = 0.0;
   static const double defaultAdding = 0.0;
 
   // Cost Defaults
-  static const double defaultRent = 8000;
-  static const double defaultEmployees = 28575;
-  static const double defaultDiesel = 8400;
-  static const double defaultCnss = 4200;
-  static const double defaultTva = 400;
-  static const double defaultElectricity = 1000;
-  static const double defaultPhone = 600;
-  static const double defaultDesktop = 300;
-  static const double defaultMachineFix = 300;
-  static const double defaultRepairs = 0;
-  static const int defaultProduction = 20;
+  static const double defaultRent = 0.0;
+  static const double defaultEmployees = 0.0;
+  static const double defaultDiesel = 0.0;
+  static const double defaultCnss = 0.0;
+  static const double defaultTva = 0.0;
+  static const double defaultElectricity = 0.0;
+  static const double defaultPhone = 0.0;
+  static const double defaultDesktop = 0.0;
+  static const double defaultMachineFix = 0.0;
+  static const double defaultRepairs = 0.0;
+  static const int defaultProduction = 0;
 }
 
 /// ===== Calculator Theme =====

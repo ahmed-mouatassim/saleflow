@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'provider/costs_provider.dart';
 import 'constants/costs_constants.dart';
+
 import 'widgets/summary_card.dart';
 import 'widgets/cost_section.dart';
 import '../calculator/widgets/calc_text_field.dart';
@@ -20,13 +21,7 @@ class CostsScreen extends StatefulWidget {
 
 class _CostsScreenState extends State<CostsScreen> {
   // مفتاح لإعادة بناء المحتوى عند إعادة التعيين
-  int _resetKey = 0;
-
-  void _onReset() {
-    setState(() {
-      _resetKey++;
-    });
-  }
+  final int _resetKey = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -76,8 +71,14 @@ class _CostsScreenState extends State<CostsScreen> {
 
                           const SizedBox(height: 24),
 
-                          // Reset Button
-                          _buildResetButton(context, costs),
+                          // Sponge Types Section
+                          _buildSpongeTypesSection(costs),
+
+                          // Dress Types Section
+                          _buildDressTypesSection(costs),
+
+                          // Footer Types Section
+                          _buildFooterTypesSection(costs),
 
                           const SizedBox(height: 40),
                         ],
@@ -201,34 +202,6 @@ class _CostsScreenState extends State<CostsScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: CalcTextField(
-                label: 'CNSS',
-                hint: 'الضمان الاجتماعي',
-                initialValue: costs.cnss.toString(),
-                prefixIcon: Icons.security_rounded,
-                onChanged: (value) {
-                  costs.setCnss(double.tryParse(value) ?? 0);
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: CalcTextField(
-                label: 'TVA',
-                hint: 'الضريبة',
-                initialValue: costs.tva.toString(),
-                prefixIcon: Icons.receipt_long_rounded,
-                onChanged: (value) {
-                  costs.setTva(double.tryParse(value) ?? 0);
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: CalcTextField(
                 label: 'الكهرباء',
                 hint: 'فاتورة الكهرباء',
                 initialValue: costs.electricity.toString(),
@@ -245,24 +218,24 @@ class _CostsScreenState extends State<CostsScreen> {
           children: [
             Expanded(
               child: CalcTextField(
-                label: 'الهاتف',
-                hint: 'فاتورة الهاتف',
-                initialValue: costs.phone.toString(),
-                prefixIcon: Icons.phone_rounded,
+                label: 'الماء',
+                hint: 'فاتورة الماء',
+                initialValue: costs.water.toString(),
+                prefixIcon: Icons.water_drop_rounded,
                 onChanged: (value) {
-                  costs.setPhone(double.tryParse(value) ?? 0);
+                  costs.setWater(double.tryParse(value) ?? 0);
                 },
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: CalcTextField(
-                label: 'المكتب',
-                hint: 'مصاريف المكتب',
-                initialValue: costs.desktop.toString(),
-                prefixIcon: Icons.desktop_windows_rounded,
+                label: 'الأنترنت',
+                hint: 'اشتراك النت',
+                initialValue: costs.internet.toString(),
+                prefixIcon: Icons.wifi_rounded,
                 onChanged: (value) {
-                  costs.setDesktop(double.tryParse(value) ?? 0);
+                  costs.setInternet(double.tryParse(value) ?? 0);
                 },
               ),
             ),
@@ -273,24 +246,52 @@ class _CostsScreenState extends State<CostsScreen> {
           children: [
             Expanded(
               child: CalcTextField(
-                label: 'صيانة الآلات',
-                hint: 'تكلفة الصيانة',
-                initialValue: costs.machineFix.toString(),
-                prefixIcon: Icons.build_rounded,
+                label: 'النقل',
+                hint: 'مصاريف النقل',
+                initialValue: costs.transport.toString(),
+                prefixIcon: Icons.local_shipping_rounded,
                 onChanged: (value) {
-                  costs.setMachineFix(double.tryParse(value) ?? 0);
+                  costs.setTransport(double.tryParse(value) ?? 0);
                 },
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: CalcTextField(
-                label: 'الإصلاحات',
-                hint: 'مصاريف الإصلاح',
-                initialValue: costs.repairs.toString(),
-                prefixIcon: Icons.handyman_rounded,
+                label: 'التسويق',
+                hint: 'إعلانات/تسويق',
+                initialValue: costs.marketing.toString(),
+                prefixIcon: Icons.campaign_rounded,
                 onChanged: (value) {
-                  costs.setRepairs(double.tryParse(value) ?? 0);
+                  costs.setMarketing(double.tryParse(value) ?? 0);
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: CalcTextField(
+                label: 'الصيانة',
+                hint: 'صيانة وإصلاح',
+                initialValue: costs.maintenance.toString(),
+                prefixIcon: Icons.build_rounded,
+                onChanged: (value) {
+                  costs.setMaintenance(double.tryParse(value) ?? 0);
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: CalcTextField(
+                label: 'أخرى',
+                hint: 'مصاريف متنوعة',
+                initialValue: costs.otherMonthly.toString(),
+                prefixIcon: Icons.more_horiz_rounded,
+                onChanged: (value) {
+                  costs.setOtherMonthly(double.tryParse(value) ?? 0);
                 },
               ),
             ),
@@ -341,32 +342,6 @@ class _CostsScreenState extends State<CostsScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: CalcTextField(
-                label: 'الطبقة الكبيرة',
-                hint: 'سعر الوحدة',
-                initialValue: costs.largeFlyer.toString(),
-                onChanged: (value) {
-                  costs.setLargeFlyer(double.tryParse(value) ?? 0);
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: CalcTextField(
-                label: 'الطبقة الصغيرة',
-                hint: 'سعر الوحدة',
-                initialValue: costs.smallFlyer.toString(),
-                onChanged: (value) {
-                  costs.setSmallFlyer(double.tryParse(value) ?? 0);
-                },
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: CalcTextField(
                 label: 'البلاستيك',
                 hint: 'سعر الوحدة',
                 initialValue: costs.plastic.toString(),
@@ -375,17 +350,6 @@ class _CostsScreenState extends State<CostsScreen> {
                 },
               ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: CalcTextField(
-                label: 'السكوتش',
-                hint: 'سعر الوحدة',
-                initialValue: costs.scotch.toString(),
-                onChanged: (value) {
-                  costs.setScotch(double.tryParse(value) ?? 0);
-                },
-              ),
-            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -393,22 +357,22 @@ class _CostsScreenState extends State<CostsScreen> {
           children: [
             Expanded(
               child: CalcTextField(
-                label: 'الغراء',
-                hint: 'سعر الوحدة',
-                initialValue: costs.glue.toString(),
+                label: 'السكوتش',
+                hint: 'شريط لاصق',
+                initialValue: costs.scotch.toString(),
                 onChanged: (value) {
-                  costs.setGlue(double.tryParse(value) ?? 0);
+                  costs.setScotch(double.tryParse(value) ?? 0);
                 },
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: CalcTextField(
-                label: 'الإضافات',
-                hint: 'مصاريف إضافية',
-                initialValue: costs.adding.toString(),
+                label: 'أخرى',
+                hint: 'تغليف آخر',
+                initialValue: costs.otherPackaging.toString(),
                 onChanged: (value) {
-                  costs.setAdding(double.tryParse(value) ?? 0);
+                  costs.setOtherPackaging(double.tryParse(value) ?? 0);
                 },
               ),
             ),
@@ -483,6 +447,17 @@ class _CostsScreenState extends State<CostsScreen> {
                 },
               ),
             ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: CalcTextField(
+                label: 'الخيط',
+                hint: 'سعر الخيط',
+                initialValue: costs.threadPrice.toString(),
+                onChanged: (value) {
+                  costs.setThreadPrice(double.tryParse(value) ?? 0);
+                },
+              ),
+            ),
           ],
         ),
       ],
@@ -509,109 +484,150 @@ class _CostsScreenState extends State<CostsScreen> {
                 },
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: CalcTextField(
-                label: 'روسول En Sachet',
-                hint: 'سعر الوحدة',
-                initialValue: costs.springSachetValue.toString(),
-                prefixIcon: Icons.attach_money_rounded,
-                onChanged: (value) {
-                  costs.setSpringSachetValue(
-                    double.tryParse(value) ??
-                        CostsConstants.defaultSpringSachetValue,
-                  );
-                },
-              ),
-            ),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildResetButton(BuildContext context, CostsProvider costs) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.mediumImpact();
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: const Color(0xFF1E293B),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: const Row(
-              children: [
-                Icon(Icons.refresh_rounded, color: Colors.orange, size: 28),
-                SizedBox(width: 12),
-                Text(
-                  'إعادة تعيين',
-                  style: TextStyle(fontFamily: 'Tajawal', color: Colors.white),
+  Widget _buildSpongeTypesSection(CostsProvider costs) {
+    if (costs.spongeTypes.isEmpty) return const SizedBox.shrink();
+
+    final entries = costs.spongeTypes.entries.toList();
+    final List<Widget> rows = [];
+
+    // Build rows with 3 items each
+    for (int i = 0; i < entries.length; i += 3) {
+      final rowItems = entries.skip(i).take(3).toList();
+      rows.add(
+        Row(
+          children: rowItems.asMap().entries.map((mapEntry) {
+            final index = mapEntry.key;
+            final entry = mapEntry.value;
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: index < rowItems.length - 1 ? 8 : 0,
                 ),
-              ],
-            ),
-            content: const Text(
-              'هل تريد إعادة تعيين جميع التكاليف إلى القيم الافتراضية؟',
-              style: TextStyle(fontFamily: 'Tajawal', color: Colors.white70),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'إلغاء',
-                  style: TextStyle(
-                    fontFamily: 'Tajawal',
-                    color: Colors.white54,
-                  ),
+                child: CalcTextField(
+                  label: entry.key,
+                  hint: 'سعر الكيلو',
+                  initialValue: entry.value.toString(),
+                  onChanged: (value) {
+                    costs.setSpongeTypePrice(
+                      entry.key,
+                      double.tryParse(value) ?? 0,
+                    );
+                  },
                 ),
               ),
-              ElevatedButton(
-                onPressed: () {
-                  costs.resetToDefaults();
-                  Navigator.pop(context);
-                  _onReset(); // إعادة بناء الواجهة بالقيم الجديدة
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'إعادة تعيين',
-                  style: TextStyle(fontFamily: 'Tajawal', color: Colors.white),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.orange, width: 2),
-          color: Colors.orange.withValues(alpha: 0.1),
+            );
+          }).toList(),
         ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.refresh_rounded, color: Colors.orange, size: 24),
-            SizedBox(width: 12),
-            Text(
-              'إعادة تعيين للافتراضي',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Tajawal',
-                color: Colors.orange,
+      );
+      if (i + 3 < entries.length) {
+        rows.add(const SizedBox(height: 12));
+      }
+    }
+
+    return CostSection(
+      title: 'أنواع الإسفنج',
+      icon: Icons.layers_rounded,
+      children: rows,
+    );
+  }
+
+  Widget _buildDressTypesSection(CostsProvider costs) {
+    if (costs.dressTypes.isEmpty) return const SizedBox.shrink();
+
+    final entries = costs.dressTypes.entries.toList();
+    final List<Widget> rows = [];
+
+    // Build rows with 3 items each
+    for (int i = 0; i < entries.length; i += 3) {
+      final rowItems = entries.skip(i).take(3).toList();
+      rows.add(
+        Row(
+          children: rowItems.asMap().entries.map((mapEntry) {
+            final index = mapEntry.key;
+            final entry = mapEntry.value;
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: index < rowItems.length - 1 ? 8 : 0,
+                ),
+                child: CalcTextField(
+                  label: entry.key,
+                  hint: 'سعر المتر',
+                  initialValue: entry.value.toString(),
+                  onChanged: (value) {
+                    costs.setDressTypePrice(
+                      entry.key,
+                      double.tryParse(value) ?? 0,
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            );
+          }).toList(),
         ),
-      ),
+      );
+      if (i + 3 < entries.length) {
+        rows.add(const SizedBox(height: 12));
+      }
+    }
+
+    return CostSection(
+      title: 'أنواع الثوب',
+      icon: Icons.texture_rounded,
+      children: rows,
+    );
+  }
+
+  Widget _buildFooterTypesSection(CostsProvider costs) {
+    if (costs.footerTypes.isEmpty) return const SizedBox.shrink();
+
+    final entries = costs.footerTypes.entries.toList();
+    final List<Widget> rows = [];
+
+    // Build rows with 3 items each
+    for (int i = 0; i < entries.length; i += 3) {
+      final rowItems = entries.skip(i).take(3).toList();
+      rows.add(
+        Row(
+          children: rowItems.asMap().entries.map((mapEntry) {
+            final index = mapEntry.key;
+            final entry = mapEntry.value;
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: index < rowItems.length - 1 ? 8 : 0,
+                ),
+                child: CalcTextField(
+                  label: entry.key,
+                  hint: 'سعر الوحدة',
+                  initialValue: entry.value.toString(),
+                  onChanged: (value) {
+                    costs.setFooterTypePrice(
+                      entry.key,
+                      double.tryParse(value) ?? 0,
+                    );
+                  },
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      );
+      if (i + 3 < entries.length) {
+        rows.add(const SizedBox(height: 12));
+      }
+    }
+
+    return CostSection(
+      title: 'أنواع الفوتر',
+      icon: Icons.grid_view_rounded,
+      children: rows,
     );
   }
 }

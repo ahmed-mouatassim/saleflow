@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../constants/calc_constants.dart';
+
 import '../models/sponge_layer.dart';
 import '../models/calculation_result.dart';
 import '../../cost/provider/costs_provider.dart';
@@ -41,11 +41,12 @@ class CalculatorProvider extends ChangeNotifier {
   double _dressPrice = 0;
 
   // ===== Sfifa Counts (variable per calculation) =====
-  int _sfifaNum1 = CalcConstants.defaultSfifaNum1;
-  int _sfifaNum2 = CalcConstants.defaultSfifaNum2;
-  int _sfifaNum3 = CalcConstants.defaultSfifaNum3;
-  int _numChain = CalcConstants.defaultNumChain;
-  int _numElastic = CalcConstants.defaultNumElastic;
+  // ===== Sfifa Counts (variable per calculation) =====
+  int _sfifaNum1 = 3;
+  int _sfifaNum2 = 2;
+  int _sfifaNum3 = 2;
+  int _numChain = 2;
+  int _numElastic = 0;
 
   // ===== Toggle States =====
   bool _isFooterEnabled = true;
@@ -59,6 +60,7 @@ class CalculatorProvider extends ChangeNotifier {
   final List<String> _validationErrors = [];
   CalculationResult? _lastResult;
   bool _isCalculating = false;
+  double _profitMargin = 0; // % Percentage
 
   // ========== GETTERS ==========
 
@@ -82,6 +84,7 @@ class CalculatorProvider extends ChangeNotifier {
   List<String> get validationErrors => List.unmodifiable(_validationErrors);
   CalculationResult? get lastResult => _lastResult;
   bool get isCalculating => _isCalculating;
+  double get profitMargin => _profitMargin;
   bool get hasErrors => _validationErrors.isNotEmpty;
 
   // ========== SETTERS ==========
@@ -214,6 +217,11 @@ class CalculatorProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setProfitMargin(double value) {
+    _profitMargin = value;
+    notifyListeners();
+  }
+
   // ========== VALIDATION ==========
 
   bool validate() {
@@ -299,10 +307,8 @@ class CalculatorProvider extends ChangeNotifier {
         final springSizeCalcOne = (_height - 0.10) * 12;
         final springSizeCalcTow = (_width - 0.10) * 9;
         final countOfSprings = springSizeCalcOne * springSizeCalcTow;
-        // Use different price based on spring type
-        final springUnitPrice = _springType == 'sachet'
-            ? costsProvider.springSachetValue
-            : costsProvider.springValue;
+        // Updated: Only use springValue (sachet removed)
+        final springUnitPrice = costsProvider.springValue;
         springsPrice = countOfSprings * springUnitPrice;
       }
 
@@ -335,13 +341,9 @@ class CalculatorProvider extends ChangeNotifier {
       // {5} Packaging Calculation - using costs from CostsProvider
       final z1 = costsProvider.corners * 4;
       final z2 = costsProvider.tickets * 1;
-      final z3 = costsProvider.largeFlyer * 1;
-      final z4 = costsProvider.smallFlyer * 2;
       final z5 = costsProvider.plastic * 1;
-      final z6 = costsProvider.scotch * 1;
-      final z7 = costsProvider.adding * 1;
-      final packagingPrice =
-          z1 + z2 + z3 + z4 + z5 + z6 + z7 + costsProvider.glue;
+      // Removed: bigFlyer, smallFlyer, scotch, adding, glue
+      final packagingPrice = z1 + z2 + z5;
 
       // {6} Cost Calculation - using costs from CostsProvider
       final costPrice = costsProvider.costPerUnit;
@@ -357,7 +359,7 @@ class CalculatorProvider extends ChangeNotifier {
       }
 
       // Total Calculation
-      final totalBeforeDiscount =
+      final totalBeforeProfit =
           footerPrice +
           springsPrice +
           dressCalcPrice +
@@ -365,6 +367,9 @@ class CalculatorProvider extends ChangeNotifier {
           packagingPrice +
           costPrice +
           spongePrice;
+
+      final profitAmount = totalBeforeProfit * (_profitMargin / 100);
+      final finalPrice = totalBeforeProfit + profitAmount;
 
       _lastResult = CalculationResult(
         footerPrice: footerPrice,
@@ -374,7 +379,9 @@ class CalculatorProvider extends ChangeNotifier {
         packagingPrice: packagingPrice,
         costPrice: costPrice,
         spongePrice: spongePrice,
-        finalPrice: totalBeforeDiscount,
+        profitMargin: _profitMargin,
+        profitAmount: profitAmount,
+        finalPrice: finalPrice,
       );
 
       _isCalculating = false;
@@ -401,11 +408,11 @@ class CalculatorProvider extends ChangeNotifier {
     _footerLayerCount = 0;
     _selectedDressType = null;
     _dressPrice = 0;
-    _sfifaNum1 = CalcConstants.defaultSfifaNum1;
-    _sfifaNum2 = CalcConstants.defaultSfifaNum2;
-    _sfifaNum3 = CalcConstants.defaultSfifaNum3;
-    _numChain = CalcConstants.defaultNumChain;
-    _numElastic = CalcConstants.defaultNumElastic;
+    _sfifaNum1 = 3;
+    _sfifaNum2 = 2;
+    _sfifaNum3 = 2;
+    _numChain = 2;
+    _numElastic = 0;
     _isFooterEnabled = true;
     _isSfifaEnabled = true;
     _isSpringEnabled = true;
@@ -413,6 +420,7 @@ class CalculatorProvider extends ChangeNotifier {
     _validationErrors.clear();
     _lastResult = null;
     _isCalculating = false;
+    _profitMargin = 0;
     notifyListeners();
   }
 }

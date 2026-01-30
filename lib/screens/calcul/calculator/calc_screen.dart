@@ -81,13 +81,12 @@ class _CalcScreenContent extends StatelessWidget {
                         if (provider.hasErrors)
                           _buildErrorsCard(provider, isDark),
 
+                        // ===== Profit Section =====
+                        _buildProfitSection(context, provider, isDark),
+
                         // ===== Calculate Button =====
                         const SizedBox(height: 24),
                         _buildCalculateButton(context, provider),
-
-                        // ===== Reset Button =====
-                        const SizedBox(height: 12),
-                        _buildResetButton(context, provider),
 
                         const SizedBox(height: 40),
                       ],
@@ -897,58 +896,56 @@ class _CalcScreenContent extends StatelessWidget {
         HapticFeedback.mediumImpact();
         final result = provider.calculate();
         if (result != null) {
+          final name = provider.selectedDressType ?? 'مرتبة مخصصة';
+          final size = '${provider.height.toInt()}/${provider.width.toInt()}';
+
           showDialog(
             context: context,
-            builder: (context) => ResultDialog(result: result),
+            builder: (context) => ResultDialog(
+              result: result,
+              mattressName: name,
+              mattressSize: size,
+            ),
           );
         }
       },
     );
   }
 
-  // ===== RESET BUTTON =====
-  Widget _buildResetButton(BuildContext context, CalculatorProvider provider) {
-    return TextButton.icon(
-      onPressed: () {
-        HapticFeedback.lightImpact();
-        provider.reset();
-      },
-      icon: const Icon(Icons.refresh_rounded, color: Colors.grey),
-      label: const Text(
-        'إعادة تعيين القيم',
-        style: TextStyle(
-          color: Colors.grey,
-          fontFamily: 'Tajawal',
-          fontWeight: FontWeight.bold,
+  // ===== PROFIT SECTION =====
+  Widget _buildProfitSection(
+    BuildContext context,
+    CalculatorProvider provider,
+    bool isDark,
+  ) {
+    final percentages = [
+      25.0,
+      30.0,
+      35.0,
+      40.0,
+      45.0,
+      50.0,
+      60.0,
+      70.0,
+      80.0,
+      90.0,
+      100.0,
+    ];
+
+    return Column(
+      children: [
+        const SectionTitle(title: 'هامش الربح', icon: Icons.percent_rounded),
+        CalcDropdown<double>(
+          label: 'نصيب الربح',
+          hint: 'اختر النسبة',
+          value: percentages.contains(provider.profitMargin)
+              ? provider.profitMargin
+              : 0.0,
+          items: percentages,
+          itemLabel: (item) => '${item.toInt()}%',
+          onChanged: (value) => provider.setProfitMargin(value ?? 0),
         ),
-      ),
-      style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-      ),
+      ],
     );
   }
 }
-
-// // ===== MESH PATTERN PAINTER =====
-// class _MeshPatternPainter extends CustomPainter {
-//   @override
-//   void paint(Canvas canvas, Size size) {
-//     final paint = Paint()
-//       ..color = Colors.white.withValues(alpha: 0.05)
-//       ..style = PaintingStyle.stroke
-//       ..strokeWidth = 1;
-
-//     const spacing = 20.0;
-
-//     // Draw grid
-//     for (double i = 0; i < size.width; i += spacing) {
-//       canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
-//     }
-//     for (double i = 0; i < size.height; i += spacing) {
-//       canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
-//     }
-//   }
-
-//   @override
-//   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-// }

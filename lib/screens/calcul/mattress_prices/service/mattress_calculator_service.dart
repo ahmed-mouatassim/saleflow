@@ -18,9 +18,7 @@ class MattressCalculatorService {
     final springSizeCalcTow = (width - 0.10) * 9;
     final countOfSprings = springSizeCalcOne * springSizeCalcTow;
 
-    final springUnitPrice = springType == 'sachet'
-        ? costsProvider.springSachetValue
-        : costsProvider.springValue;
+    final springUnitPrice = costsProvider.springValue;
 
     return countOfSprings * springUnitPrice;
   }
@@ -60,12 +58,7 @@ class MattressCalculatorService {
   double calculatePackagingPrice() {
     return (costsProvider.corners * 4) +
         (costsProvider.tickets * 1) +
-        (costsProvider.largeFlyer * 1) +
-        (costsProvider.smallFlyer * 2) +
-        (costsProvider.plastic * 1) +
-        (costsProvider.scotch * 1) +
-        (costsProvider.adding * 1) +
-        costsProvider.glue;
+        (costsProvider.plastic * 1);
   }
 
   /// حساب التكاليف
