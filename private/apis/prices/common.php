@@ -8,7 +8,7 @@ if (!defined('API_ACCESS')) {
  */
 
 /**
- * تنظيف المدخلات
+ * تنظيف anass
  */
 function sanitize_input($data) {
     if (is_array($data)) {

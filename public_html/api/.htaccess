@@ -1,0 +1,67 @@
+# تفعيل إعادة الكتابة (Enable Rewrite Engine)
+RewriteEngine On
+
+# تعيين رؤوس CORS (Set CORS Headers)
+Header always set Access-Control-Allow-Origin "*"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+Header always set Access-Control-Max-Age "86400"
+
+# معالجة طلبات OPTIONS (Handle OPTIONS requests)
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+# حماية الملفات الحساسة (Protect Sensitive Files)
+<Files "*.log">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "config.php">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "database.php">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# السماح بالوصول لملفات PHP API فقط
+<FilesMatch "\.(php)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
+# منع الوصول لملفات النسخ الاحتياطي
+<Files "*.bak">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# تعيين إعدادات PHP (PHP Settings)
+php_value upload_max_filesize 10M
+php_value post_max_size 10M
+php_value max_execution_time 30
+php_value memory_limit 128M
+
+# منع عرض فهرس المجلدات (Prevent Directory Browsing)
+Options -Indexes
+
+# تفعيل الضغط (Enable Compression)
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+</IfModule>
+
+# إعادة توجيه الأخطاء (Error Redirects)
+ErrorDocument 404 /api/error.php
+ErrorDocument 500 /api/error.php
