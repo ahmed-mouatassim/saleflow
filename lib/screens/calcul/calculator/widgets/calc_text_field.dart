@@ -14,18 +14,20 @@ class CalcTextField extends StatefulWidget {
   final bool enabled;
   final TextEditingController? controller;
   final String? suffix;
+  final List<TextInputFormatter>? inputFormatters;
 
   const CalcTextField({
     super.key,
     required this.label,
     required this.hint,
     this.initialValue,
-    this.keyboardType = TextInputType.number,
+    this.keyboardType = const TextInputType.numberWithOptions(decimal: true),
     this.prefixIcon,
     this.onChanged,
     this.enabled = true,
     this.controller,
     this.suffix,
+    this.inputFormatters,
   });
 
   @override
@@ -87,9 +89,22 @@ class _CalcTextFieldState extends State<CalcTextField> {
           fontSize: 15,
           fontFamily: 'Tajawal',
         ),
-        inputFormatters: widget.keyboardType == TextInputType.number
-            ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))]
-            : null,
+        inputFormatters:
+            widget.inputFormatters ??
+            (widget.keyboardType == TextInputType.number ||
+                    widget.keyboardType ==
+                        const TextInputType.numberWithOptions(decimal: true)
+                ? [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
+                    TextInputFormatter.withFunction((oldValue, newValue) {
+                      final newString = newValue.text.replaceAll(',', '.');
+                      return newValue.copyWith(
+                        text: newString,
+                        selection: newValue.selection,
+                      );
+                    }),
+                  ]
+                : null),
         decoration: InputDecoration(
           labelText: widget.label,
           hintText: widget.hint,
@@ -166,7 +181,10 @@ class _CalcTextFieldState extends State<CalcTextField> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: CalcTheme.primaryStart, width: 2),
+            borderSide: const BorderSide(
+              color: CalcTheme.primaryStart,
+              width: 2,
+            ),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
