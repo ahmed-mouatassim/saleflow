@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../calculator/provider/calc_data_provider.dart';
 import '../calculator/constants/calc_constants.dart';
-import '../calculator/service/calc_api_service.dart';
+import '../calculator/provider/calc_data_provider.dart';
+import 'models/material_item.dart';
+import 'widgets/material_card.dart';
+import 'widgets/add_material_dialog.dart';
+import 'widgets/edit_material_dialog.dart';
+import 'widgets/delete_material_dialog.dart';
+import 'service/materials_api_service.dart';
 
 /// ===== Materials Management Screen =====
-/// شاشة إدارة المواد (الإسفنج، الثوب، الفوتر)
+/// شاشة إدارة جميع المواد والأسعار من الـ API
+/// تدعم عمليات CRUD كاملة مع واجهة مستخدم حديثة
 class MaterialsManagementScreen extends StatefulWidget {
   const MaterialsManagementScreen({super.key});
 
@@ -18,11 +24,65 @@ class _MaterialsManagementScreenState extends State<MaterialsManagementScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isLoading = false;
+  bool _isSaving = false;
+
+  // All material types from API
+  static const List<MaterialTypeConfig> _materialTypes = [
+    MaterialTypeConfig(
+      type: 'spongeTypes',
+      arabicName: 'الإسفنج',
+      icon: Icons.layers_rounded,
+      color: CalcTheme.primaryStart,
+      unit: 'درهم/طن',
+    ),
+    MaterialTypeConfig(
+      type: 'dressTypes',
+      arabicName: 'الثوب',
+      icon: Icons.texture_rounded,
+      color: CalcTheme.warning,
+      unit: 'درهم/متر',
+    ),
+    MaterialTypeConfig(
+      type: 'footerTypes',
+      arabicName: 'الفوتر',
+      icon: Icons.grid_view_rounded,
+      color: CalcTheme.success,
+      unit: 'درهم/وحدة',
+    ),
+    MaterialTypeConfig(
+      type: 'sfifa',
+      arabicName: 'السفيفة',
+      icon: Icons.linear_scale_rounded,
+      color: Color(0xFFE91E63),
+      unit: 'درهم',
+    ),
+    MaterialTypeConfig(
+      type: 'spring',
+      arabicName: 'الروسول',
+      icon: Icons.waves_rounded,
+      color: Color(0xFF9C27B0),
+      unit: 'درهم',
+    ),
+    MaterialTypeConfig(
+      type: 'Packaging Defaults',
+      arabicName: 'التغليف',
+      icon: Icons.inventory_2_rounded,
+      color: Color(0xFF00BCD4),
+      unit: 'درهم',
+    ),
+    MaterialTypeConfig(
+      type: 'Cost Defaults',
+      arabicName: 'التكاليف',
+      icon: Icons.monetization_on_rounded,
+      color: Color(0xFFFF5722),
+      unit: 'درهم',
+    ),
+  ];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: _materialTypes.length, vsync: this);
   }
 
   @override
@@ -31,617 +91,616 @@ class _MaterialsManagementScreenState extends State<MaterialsManagementScreen>
     super.dispose();
   }
 
+  // ===== CRUD Operations =====
+
+  Future<void> _refreshData(CalcDataProvider dataProvider) async {
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await dataProvider.refresh();
+
+      if (mounted) {
+        _showSnackBar(
+          dataProvider.hasError
+              ? dataProvider.errorMessage ?? 'فشل في تحديث البيانات'
+              : 'تم تحديث البيانات بنجاح',
+          isError: dataProvider.hasError,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<bool> _handleAddMaterial(
+    CalcDataProvider dataProvider,
+    String name,
+    String type,
+    double price,
+  ) async {
+    // Check for duplicate
+    if (_checkDuplicate(dataProvider, name, type)) {
+      _showSnackBar('هذه المادة موجودة بالفعل!', isError: true);
+      return false;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      final response = await MaterialsApiService.createMaterial(
+        name: name,
+        type: type,
+        price: price,
+        editedBy: 'app',
+      );
+
+      if (response.success) {
+        await dataProvider.refresh();
+        _showSnackBar('تمت إضافة المادة بنجاح ✓');
+        return true;
+      } else {
+        _showSnackBar(response.message ?? 'فشل في إضافة المادة', isError: true);
+        return false;
+      }
+    } catch (e) {
+      _showSnackBar('حدث خطأ: $e', isError: true);
+      return false;
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  Future<bool> _handleUpdateMaterial(
+    CalcDataProvider dataProvider,
+    MaterialItem item,
+    double newPrice,
+  ) async {
+    setState(() => _isSaving = true);
+
+    try {
+      final response = await MaterialsApiService.updateMaterial(
+        id: item.id,
+        name: item.name,
+        type: item.type,
+        price: newPrice,
+        editedBy: 'app',
+      );
+
+      if (response.success) {
+        await dataProvider.refresh();
+        _showSnackBar('تم تحديث السعر بنجاح ✓');
+        return true;
+      } else {
+        _showSnackBar(response.message ?? 'فشل في تحديث السعر', isError: true);
+        return false;
+      }
+    } catch (e) {
+      _showSnackBar('حدث خطأ: $e', isError: true);
+      return false;
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  Future<bool> _handleDeleteMaterial(
+    CalcDataProvider dataProvider,
+    MaterialItem item,
+  ) async {
+    setState(() => _isSaving = true);
+
+    try {
+      final response = await MaterialsApiService.deleteMaterial(
+        id: item.id,
+        name: item.name,
+        type: item.type,
+      );
+
+      if (response.success) {
+        await dataProvider.refresh();
+        _showSnackBar('تم حذف المادة بنجاح ✓');
+        return true;
+      } else {
+        _showSnackBar(response.message ?? 'فشل في حذف المادة', isError: true);
+        return false;
+      }
+    } catch (e) {
+      _showSnackBar('حدث خطأ: $e', isError: true);
+      return false;
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  bool _checkDuplicate(
+    CalcDataProvider dataProvider,
+    String name,
+    String type,
+  ) {
+    final items = _getItemsForType(dataProvider, type);
+    return items.any((e) => e.name.toLowerCase() == name.toLowerCase());
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError ? Icons.error_outline : Icons.check_circle_outline,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  fontFamily: 'Tajawal',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: isError ? CalcTheme.error : CalcTheme.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+        duration: Duration(seconds: isError ? 4 : 2),
+      ),
+    );
+  }
+
+  // ===== Dialog Handlers =====
+
+  void _showAddDialog(
+    CalcDataProvider dataProvider, {
+    String? preSelectedType,
+  }) {
+    AddMaterialDialog.show(
+      context,
+      preSelectedType: preSelectedType,
+      currentTabIndex: _tabController.index,
+      materialTypes: _materialTypes,
+      onAdd: (name, type, price) =>
+          _handleAddMaterial(dataProvider, name, type, price),
+    );
+  }
+
+  void _showEditDialog(CalcDataProvider dataProvider, MaterialItem item) {
+    EditMaterialDialog.show(
+      context,
+      item: item,
+      onUpdate: (item, newPrice) =>
+          _handleUpdateMaterial(dataProvider, item, newPrice),
+    );
+  }
+
+  void _showDeleteDialog(CalcDataProvider dataProvider, MaterialItem item) {
+    DeleteMaterialDialog.show(
+      context,
+      item: item,
+      onDelete: (item) => _handleDeleteMaterial(dataProvider, item),
+    );
+  }
+
+  // ===== Get Items for Type =====
+  List<MaterialItem> _getItemsForType(
+    CalcDataProvider dataProvider,
+    String type,
+  ) {
+    // 1. Preferred Method: Get from allProducts (Source: DB 'type' column)
+    // This ensures items are categorized correctly by their trusted DB type,
+    // not by guessing based on their name.
+    if (dataProvider.allProducts.isNotEmpty) {
+      final items = dataProvider.allProducts
+          .where((p) => p.type == type)
+          .map(
+            (p) => MaterialItem(
+              id: p.id,
+              name: p.name,
+              type: p.type,
+              price: p.price,
+              date: p.date.toIso8601String(),
+              editedBy: p.editedBy,
+            ),
+          )
+          .toList();
+
+      // Return ONLY if we actually found something OR if we trust allProducts is loaded.
+      // Since allProducts comes from the same API call as the maps, if it's not empty,
+      // it contains ALL items. So even if 'items' is empty, it means "no items of this type".
+      // We should return it to avoid falling back to the messy map logic.
+      return items;
+    }
+
+    // 2. Fallback Method: Use legacy maps (less reliable, missing IDs)
+    Map<String, dynamic> data;
+
+    switch (type) {
+      case 'spongeTypes':
+        data = dataProvider.spongeTypes.map((k, v) => MapEntry(k, v));
+        break;
+      case 'dressTypes':
+        data = dataProvider.dressTypes;
+        break;
+      case 'footerTypes':
+        data = dataProvider.footerTypes;
+        break;
+      case 'sfifa':
+        // Get sfifa items from API data
+        data =
+            dataProvider.apiData?.sfifaDefaults
+                .map((k, v) => MapEntry(k, v))
+                .cast<String, dynamic>() ??
+            {};
+        // Filter out spring items
+        data.removeWhere(
+          (k, v) =>
+              k.toLowerCase().contains('spring') ||
+              k.toLowerCase().contains('sachet') ||
+              k.contains('روسول'),
+        );
+        break;
+      case 'spring':
+        // Get spring items from API data
+        data = <String, dynamic>{};
+        if (dataProvider.apiData?.sfifaDefaults != null) {
+          dataProvider.apiData!.sfifaDefaults.forEach((k, v) {
+            if (k.toLowerCase().contains('spring') ||
+                k.toLowerCase().contains('sachet') ||
+                k.contains('روسول')) {
+              data[k] = v;
+            }
+          });
+        }
+        break;
+      case 'Packaging Defaults':
+        data =
+            dataProvider.apiData?.packagingDefaults
+                .map((k, v) => MapEntry(k, v))
+                .cast<String, dynamic>() ??
+            {};
+        break;
+      case 'Cost Defaults':
+        data =
+            dataProvider.apiData?.costDefaults
+                .map((k, v) => MapEntry(k, v))
+                .cast<String, dynamic>() ??
+            {};
+        break;
+      default:
+        data = {};
+    }
+
+    return data.entries.map((e) {
+      return MaterialItem(
+        name: e.key,
+        type: type,
+        price: (e.value as num).toDouble(),
+      );
+    }).toList();
+  }
+
+  // ===== Build Methods =====
+
   @override
   Widget build(BuildContext context) {
     return Consumer<CalcDataProvider>(
       builder: (context, dataProvider, child) {
         return Scaffold(
           backgroundColor: const Color(0xFF1A1A2E),
-          appBar: AppBar(
-            title: const Text(
-              'إدارة المواد والأسعار',
-              style: TextStyle(
-                fontFamily: 'Tajawal',
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            actions: [
-              // Refresh button
-              IconButton(
-                icon: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.refresh_rounded),
-                onPressed: _isLoading ? null : () => _refreshData(dataProvider),
-              ),
-            ],
-            bottom: TabBar(
-              controller: _tabController,
-              indicatorColor: CalcTheme.primaryStart,
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.white54,
-              labelStyle: const TextStyle(
-                fontFamily: 'Tajawal',
-                fontWeight: FontWeight.bold,
-              ),
-              tabs: const [
-                Tab(
-                  text: 'الإسفنج',
-                  icon: Icon(Icons.layers_rounded, size: 20),
-                ),
-                Tab(text: 'الثوب', icon: Icon(Icons.texture_rounded, size: 20)),
-                Tab(
-                  text: 'الفوتر',
-                  icon: Icon(Icons.grid_view_rounded, size: 20),
-                ),
-              ],
-            ),
-          ),
-          body: TabBarView(
-            controller: _tabController,
-            children: [
-              // Sponge Types Tab
-              _buildMaterialsTab(
-                dataProvider: dataProvider,
-                type: 'sponge',
-                title: 'أنواع الإسفنج',
-                subtitle: 'أسعار الإسفنج لكل نوع (درهم/كيلو)',
-                icon: Icons.layers_rounded,
-                items: dataProvider.spongeTypes.entries
-                    .map(
-                      (e) => MaterialItem(
-                        name: e.key,
-                        price: e.value.toDouble(),
-                        type: 'sponge',
-                      ),
-                    )
-                    .toList(),
-              ),
-
-              // Dress Types Tab
-              _buildMaterialsTab(
-                dataProvider: dataProvider,
-                type: 'dress',
-                title: 'أنواع الثوب',
-                subtitle: 'أسعار الثوب لكل نوع (درهم/متر)',
-                icon: Icons.texture_rounded,
-                items: dataProvider.dressTypes.entries
-                    .map(
-                      (e) => MaterialItem(
-                        name: e.key,
-                        price: e.value,
-                        type: 'dress',
-                      ),
-                    )
-                    .toList(),
-              ),
-
-              // Footer Types Tab
-              _buildMaterialsTab(
-                dataProvider: dataProvider,
-                type: 'footer',
-                title: 'أنواع الفوتر',
-                subtitle: 'أسعار الفوتر لكل نوع (درهم/وحدة)',
-                icon: Icons.grid_view_rounded,
-                items: dataProvider.footerTypes.entries
-                    .map(
-                      (e) => MaterialItem(
-                        name: e.key,
-                        price: e.value,
-                        type: 'footer',
-                      ),
-                    )
-                    .toList(),
-              ),
-            ],
-          ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => _showAddMaterialDialog(dataProvider),
-            icon: const Icon(Icons.add_rounded),
-            label: const Text(
-              'إضافة مادة جديدة',
-              style: TextStyle(fontFamily: 'Tajawal'),
-            ),
-            backgroundColor: CalcTheme.primaryStart,
-          ),
+          appBar: _buildAppBar(dataProvider),
+          body: _buildBody(dataProvider),
+          floatingActionButton: _buildFAB(dataProvider),
         );
       },
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(CalcDataProvider dataProvider) {
+    return AppBar(
+      title: const Text(
+        'إدارة المواد والأسعار',
+        style: TextStyle(
+          fontFamily: 'Tajawal',
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+        ),
+      ),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      centerTitle: true,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded),
+        onPressed: () => Navigator.pop(context),
+      ),
+      actions: [
+        // Refresh button
+        IconButton(
+          icon: _isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Icon(Icons.refresh_rounded),
+          onPressed: _isLoading ? null : () => _refreshData(dataProvider),
+          tooltip: 'تحديث البيانات',
+        ),
+      ],
+      bottom: TabBar(
+        controller: _tabController,
+        isScrollable: true, // ✅ Make tabs scrollable
+        tabAlignment: TabAlignment.start,
+        indicatorColor: CalcTheme.primaryStart,
+        indicatorWeight: 3,
+        indicatorSize: TabBarIndicatorSize.label,
+        labelColor: Colors.white,
+        unselectedLabelColor: Colors.white54,
+        labelStyle: const TextStyle(
+          fontFamily: 'Tajawal',
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        tabs: _materialTypes.map((config) {
+          final count = _getItemsForType(dataProvider, config.type).length;
+          return _buildTab(config.icon, config.arabicName, count, config.color);
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildTab(IconData icon, String label, int count, Color color) {
+    return Tab(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16),
+          const SizedBox(width: 4),
+          Text(label),
+          if (count > 0) ...[
+            const SizedBox(width: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '$count',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBody(CalcDataProvider dataProvider) {
+    if (dataProvider.isLoading && !dataProvider.isLoaded) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: CalcTheme.primaryStart),
+            SizedBox(height: 16),
+            Text(
+              'جاري تحميل البيانات...',
+              style: TextStyle(fontFamily: 'Tajawal', color: Colors.white54),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return TabBarView(
+      controller: _tabController,
+      children: _materialTypes.map((config) {
+        final items = _getItemsForType(dataProvider, config.type);
+        return _buildMaterialsTab(
+          dataProvider: dataProvider,
+          config: config,
+          items: items,
+        );
+      }).toList(),
     );
   }
 
   Widget _buildMaterialsTab({
     required CalcDataProvider dataProvider,
-    required String type,
-    required String title,
-    required String subtitle,
-    required IconData icon,
+    required MaterialTypeConfig config,
     required List<MaterialItem> items,
   }) {
-    if (dataProvider.isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: CalcTheme.primaryStart),
-      );
+    if (items.isEmpty) {
+      return _buildEmptyState(dataProvider, config);
     }
 
-    if (items.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 80, color: Colors.white24),
-            const SizedBox(height: 16),
-            Text(
-              'لا توجد $title',
-              style: const TextStyle(
-                fontSize: 18,
-                color: Colors.white54,
-                fontFamily: 'Tajawal',
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () =>
-                  _showAddMaterialDialog(dataProvider, preSelectedType: type),
-              icon: const Icon(Icons.add_rounded),
-              label: const Text(
-                'إضافة',
-                style: TextStyle(fontFamily: 'Tajawal'),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: CalcTheme.primaryStart,
-              ),
-            ),
+    return RefreshIndicator(
+      onRefresh: () => _refreshData(dataProvider),
+      color: CalcTheme.primaryStart,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: items.length + 1,
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _buildSectionHeader(config, items.length);
+          }
+
+          final item = items[index - 1];
+          return MaterialCard(
+            item: item,
+            isSaving: _isSaving,
+            onEdit: () => _showEditDialog(dataProvider, item),
+            onDelete: () => _showDeleteDialog(dataProvider, item),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(MaterialTypeConfig config, int count) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            config.color.withValues(alpha: 0.15),
+            config.color.withValues(alpha: 0.05),
           ],
         ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: items.length + 1, // +1 for header
-      itemBuilder: (context, index) {
-        if (index == 0) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Row(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: config.color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: config.color.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(config.icon, color: config.color, size: 28),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: CalcTheme.primaryStart.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: CalcTheme.primaryStart, size: 24),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          fontFamily: 'Tajawal',
-                        ),
-                      ),
-                      Text(
-                        subtitle,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Colors.white54,
-                          fontFamily: 'Tajawal',
-                        ),
-                      ),
-                    ],
+                Text(
+                  'أنواع ${config.arabicName}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontFamily: 'Tajawal',
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: CalcTheme.success.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${items.length} نوع',
-                    style: const TextStyle(
-                      color: CalcTheme.success,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Tajawal',
-                    ),
+                const SizedBox(height: 4),
+                Text(
+                  'أسعار ${config.arabicName} (${config.unit})',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Colors.white54,
+                    fontFamily: 'Tajawal',
                   ),
                 ),
               ],
             ),
-          );
-        }
-
-        final item = items[index - 1];
-        return _buildMaterialCard(dataProvider, item);
-      },
-    );
-  }
-
-  Widget _buildMaterialCard(CalcDataProvider dataProvider, MaterialItem item) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        title: Text(
-          item.name,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Tajawal',
-            fontSize: 16,
           ),
-        ),
-        subtitle: Text(
-          _getTypeLabel(item.type),
-          style: const TextStyle(color: Colors.white54, fontFamily: 'Tajawal'),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Price
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [CalcTheme.primaryStart, CalcTheme.primaryEnd],
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '${item.price.toStringAsFixed(item.price == item.price.roundToDouble() ? 0 : 2)} درهم',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Tajawal',
-                ),
-              ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: config.color.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(20),
             ),
-            const SizedBox(width: 8),
-            // Edit button
-            IconButton(
-              icon: const Icon(Icons.edit_rounded, color: Colors.white70),
-              onPressed: () => _showEditMaterialDialog(dataProvider, item),
-            ),
-            // Delete button
-            IconButton(
-              icon: const Icon(Icons.delete_rounded, color: Colors.redAccent),
-              onPressed: () => _showDeleteConfirmation(dataProvider, item),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _getTypeLabel(String type) {
-    switch (type) {
-      case 'sponge':
-        return 'إسفنج';
-      case 'dress':
-        return 'ثوب';
-      case 'footer':
-        return 'فوتر';
-      default:
-        return type;
-    }
-  }
-
-  Future<void> _refreshData(CalcDataProvider dataProvider) async {
-    setState(() => _isLoading = true);
-    await dataProvider.refresh();
-    setState(() => _isLoading = false);
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            dataProvider.hasError
-                ? dataProvider.errorMessage ?? 'فشل في تحديث البيانات'
-                : 'تم تحديث البيانات بنجاح',
-            style: const TextStyle(fontFamily: 'Tajawal'),
-          ),
-          backgroundColor: dataProvider.hasError
-              ? Colors.red
-              : CalcTheme.success,
-        ),
-      );
-    }
-  }
-
-  void _showAddMaterialDialog(
-    CalcDataProvider dataProvider, {
-    String? preSelectedType,
-  }) {
-    final nameController = TextEditingController();
-    final priceController = TextEditingController();
-    String selectedType = preSelectedType ?? _getCurrentTabType();
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: CalcTheme.primaryStart.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.add_rounded,
-                  color: CalcTheme.primaryStart,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'إضافة مادة جديدة',
-                style: TextStyle(fontFamily: 'Tajawal', color: Colors.white),
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Type selector
-                DropdownButtonFormField<String>(
-                  initialValue: selectedType,
-                  dropdownColor: const Color(0xFF2D3748),
-                  decoration: InputDecoration(
-                    labelText: 'نوع المادة',
-                    labelStyle: const TextStyle(
-                      color: Colors.white70,
-                      fontFamily: 'Tajawal',
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.white24),
-                    ),
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'sponge',
-                      child: Text(
-                        'إسفنج',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'Tajawal',
-                        ),
-                      ),
-                    ),
-                    DropdownMenuItem(
-                      value: 'dress',
-                      child: Text(
-                        'ثوب',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'Tajawal',
-                        ),
-                      ),
-                    ),
-                    DropdownMenuItem(
-                      value: 'footer',
-                      child: Text(
-                        'فوتر',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'Tajawal',
-                        ),
-                      ),
-                    ),
-                  ],
-                  onChanged: (value) =>
-                      setDialogState(() => selectedType = value!),
-                ),
-                const SizedBox(height: 16),
-                // Name field
-                TextField(
-                  controller: nameController,
-                  style: const TextStyle(
-                    color: Colors.white,
+                Icon(Icons.inventory_2_outlined, size: 16, color: config.color),
+                const SizedBox(width: 6),
+                Text(
+                  '$count نوع',
+                  style: TextStyle(
+                    color: config.color,
+                    fontWeight: FontWeight.bold,
                     fontFamily: 'Tajawal',
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'اسم المادة',
-                    labelStyle: const TextStyle(
-                      color: Colors.white70,
-                      fontFamily: 'Tajawal',
-                    ),
-                    hintText: 'مثال: إسفنج H25',
-                    hintStyle: const TextStyle(color: Colors.white30),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.white24),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Price field
-                TextField(
-                  controller: priceController,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Tajawal',
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'السعر (درهم)',
-                    labelStyle: const TextStyle(
-                      color: Colors.white70,
-                      fontFamily: 'Tajawal',
-                    ),
-                    hintText: '0.00',
-                    hintStyle: const TextStyle(color: Colors.white30),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.white24),
-                    ),
-                    suffixText: 'درهم',
-                    suffixStyle: const TextStyle(color: Colors.white54),
+                    fontSize: 14,
                   ),
                 ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'إلغاء',
-                style: TextStyle(color: Colors.white54, fontFamily: 'Tajawal'),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final name = nameController.text.trim();
-                final price = double.tryParse(priceController.text) ?? 0;
-
-                if (name.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('الرجاء إدخال اسم المادة')),
-                  );
-                  return;
-                }
-
-                Navigator.pop(context);
-                await _addMaterial(dataProvider, name, selectedType, price);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: CalcTheme.primaryStart,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                'إضافة',
-                style: TextStyle(fontFamily: 'Tajawal', color: Colors.white),
-              ),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
 
-  void _showEditMaterialDialog(
+  Widget _buildEmptyState(
     CalcDataProvider dataProvider,
-    MaterialItem item,
+    MaterialTypeConfig config,
   ) {
-    final priceController = TextEditingController(text: item.price.toString());
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.edit_rounded, color: Colors.amber),
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: config.color.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'تعديل ${item.name}',
-                style: const TextStyle(
-                  fontFamily: 'Tajawal',
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
+            child: Icon(
+              config.icon,
+              size: 64,
+              color: config.color.withValues(alpha: 0.5),
             ),
-          ],
-        ),
-        content: TextField(
-          controller: priceController,
-          keyboardType: TextInputType.number,
-          autofocus: true,
-          style: const TextStyle(
-            color: Colors.white,
-            fontFamily: 'Tajawal',
-            fontSize: 18,
           ),
-          decoration: InputDecoration(
-            labelText: 'السعر الجديد (درهم)',
-            labelStyle: const TextStyle(
-              color: Colors.white70,
+          const SizedBox(height: 24),
+          Text(
+            'لا توجد أنواع ${config.arabicName}',
+            style: const TextStyle(
+              fontSize: 18,
+              color: Colors.white54,
+              fontFamily: 'Tajawal',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'اضغط على الزر أدناه لإضافة نوع جديد',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white38,
               fontFamily: 'Tajawal',
             ),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.white24),
-            ),
-            suffixText: 'درهم',
-            suffixStyle: const TextStyle(color: Colors.white54),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'إلغاء',
-              style: TextStyle(color: Colors.white54, fontFamily: 'Tajawal'),
+          const SizedBox(height: 32),
+          ElevatedButton.icon(
+            onPressed: () =>
+                _showAddDialog(dataProvider, preSelectedType: config.type),
+            icon: const Icon(Icons.add_rounded),
+            label: const Text(
+              'إضافة نوع',
+              style: TextStyle(
+                fontFamily: 'Tajawal',
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final price = double.tryParse(priceController.text) ?? 0;
-              Navigator.pop(context);
-              await _updateMaterial(dataProvider, item, price);
-            },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.amber,
+              backgroundColor: config.color,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-            ),
-            child: const Text(
-              'حفظ',
-              style: TextStyle(fontFamily: 'Tajawal', color: Colors.black),
             ),
           ),
         ],
@@ -649,257 +708,46 @@ class _MaterialsManagementScreenState extends State<MaterialsManagementScreen>
     );
   }
 
-  void _showDeleteConfirmation(
-    CalcDataProvider dataProvider,
-    MaterialItem item,
-  ) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8),
+  Widget _buildFAB(CalcDataProvider dataProvider) {
+    return FloatingActionButton.extended(
+      onPressed: _isSaving ? null : () => _showAddDialog(dataProvider),
+      icon: _isSaving
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
               ),
-              child: const Icon(Icons.delete_rounded, color: Colors.red),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'تأكيد الحذف',
-              style: TextStyle(fontFamily: 'Tajawal', color: Colors.white),
-            ),
-          ],
+            )
+          : const Icon(Icons.add_rounded),
+      label: Text(
+        _isSaving ? 'جاري الحفظ...' : 'إضافة جديد',
+        style: const TextStyle(
+          fontFamily: 'Tajawal',
+          fontWeight: FontWeight.bold,
         ),
-        content: Text(
-          'هل تريد حذف "${item.name}"؟\nلا يمكن التراجع عن هذا الإجراء.',
-          style: const TextStyle(fontFamily: 'Tajawal', color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'إلغاء',
-              style: TextStyle(color: Colors.white54, fontFamily: 'Tajawal'),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _deleteMaterial(dataProvider, item);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text(
-              'حذف',
-              style: TextStyle(fontFamily: 'Tajawal', color: Colors.white),
-            ),
-          ),
-        ],
       ),
+      backgroundColor: CalcTheme.primaryStart,
+      foregroundColor: Colors.white,
+      elevation: 4,
     );
-  }
-
-  String _getCurrentTabType() {
-    switch (_tabController.index) {
-      case 0:
-        return 'sponge';
-      case 1:
-        return 'dress';
-      case 2:
-        return 'footer';
-      default:
-        return 'sponge';
-    }
-  }
-
-  Future<void> _addMaterial(
-    CalcDataProvider dataProvider,
-    String name,
-    String type,
-    double price,
-  ) async {
-    setState(() => _isLoading = true);
-
-    try {
-      final response = await CalcApiService.createProduct(
-        name: name,
-        type: type,
-        price: price,
-      );
-
-      if (mounted) {
-        setState(() => _isLoading = false);
-
-        if (response.success) {
-          await dataProvider.refresh();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'تمت إضافة المادة بنجاح',
-                style: TextStyle(fontFamily: 'Tajawal'),
-              ),
-              backgroundColor: CalcTheme.success,
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                response.message ?? 'فشل في إضافة المادة',
-                style: const TextStyle(fontFamily: 'Tajawal'),
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'خطأ: $e',
-              style: const TextStyle(fontFamily: 'Tajawal'),
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _updateMaterial(
-    CalcDataProvider dataProvider,
-    MaterialItem item,
-    double newPrice,
-  ) async {
-    setState(() => _isLoading = true);
-
-    try {
-      final response = await CalcApiService.updateProduct(
-        name: item.name,
-        type: item.type,
-        price: newPrice,
-      );
-
-      if (mounted) {
-        setState(() => _isLoading = false);
-
-        if (response.success) {
-          await dataProvider.refresh();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'تم تحديث السعر بنجاح',
-                style: TextStyle(fontFamily: 'Tajawal'),
-              ),
-              backgroundColor: CalcTheme.success,
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                response.message ?? 'فشل في تحديث السعر',
-                style: const TextStyle(fontFamily: 'Tajawal'),
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'خطأ: $e',
-              style: const TextStyle(fontFamily: 'Tajawal'),
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _deleteMaterial(
-    CalcDataProvider dataProvider,
-    MaterialItem item,
-  ) async {
-    setState(() => _isLoading = true);
-
-    try {
-      final response = await CalcApiService.deleteProduct(
-        name: item.name,
-        type: item.type,
-      );
-
-      if (mounted) {
-        setState(() => _isLoading = false);
-
-        if (response.success) {
-          await dataProvider.refresh();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'تم حذف المادة بنجاح',
-                style: TextStyle(fontFamily: 'Tajawal'),
-              ),
-              backgroundColor: CalcTheme.success,
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                response.message ?? 'فشل في حذف المادة',
-                style: const TextStyle(fontFamily: 'Tajawal'),
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'خطأ: $e',
-              style: const TextStyle(fontFamily: 'Tajawal'),
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 }
 
-/// Material Item Model
-class MaterialItem {
-  final String name;
-  final double price;
+/// Material type configuration
+class MaterialTypeConfig {
   final String type;
-  final int? id;
+  final String arabicName;
+  final IconData icon;
+  final Color color;
+  final String unit;
 
-  MaterialItem({
-    required this.name,
-    required this.price,
+  const MaterialTypeConfig({
     required this.type,
-    this.id,
+    required this.arabicName,
+    required this.icon,
+    required this.color,
+    required this.unit,
   });
 }

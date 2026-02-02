@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Generation Time: Jan 30, 2026 at 06:04 PM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+-- Host: localhost:3306
+-- Generation Time: Feb 01, 2026 at 10:04 AM
+-- Server version: 10.11.14-MariaDB-cll-lve
+-- PHP Version: 8.4.16
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -42,13 +42,13 @@ CREATE TABLE `prices` (
 
 INSERT INTO `prices` (`id`, `name`, `type`, `price`, `date`, `edite_by`) VALUES
 (1, 'D22', 'spongeTypes', 2184.000, '2026-01-26', 'anass'),
-(2, 'D20', 'spongeTypes', 1820.000, '2026-01-26', 'anass'),
-(3, 'ABS', 'spongeTypes', 2635.000, '2026-01-26', 'anass'),
+(2, 'D20', 'spongeTypes', 1821.000, '2026-02-01', 'app'),
+(3, 'ABS', 'spongeTypes', 2636.000, '2026-02-01', 'app'),
 (4, 'D33', 'spongeTypes', 1490.000, '2026-01-26', 'anass'),
-(5, 'HR D35', 'spongeTypes', 4000.000, '2026-01-26', 'anass'),
-(6, 'D33+ABS', 'spongeTypes', 1450.000, '2026-01-26', 'anass'),
-(7, 'D18', 'spongeTypes', 925.000, '2026-01-26', 'anass'),
-(8, 'footer_1m*2', 'footerTypes', 11.880, '2026-01-26', 'anass'),
+(5, 'HR D35', 'spongeTypes', 4001.000, '2026-02-01', 'app'),
+(6, 'D33+ABS', 'spongeTypes', 1451.000, '2026-02-01', 'app'),
+(7, 'D18', 'spongeTypes', 926.000, '2026-02-01', 'app'),
+(8, 'footer_1m*2', 'footerTypes', 11.880, '2026-02-01', 'app'),
 (20, 'defaultSpringValue', 'spring', 0.919, '2026-01-30', 'app'),
 (21, 'defaultRibbon36mm', 'sfifa', 0.550, '2026-01-26', 'anass'),
 (22, 'defaultRibbon18mm', 'sfifa', 0.350, '2026-01-26', 'anass'),
@@ -58,26 +58,26 @@ INSERT INTO `prices` (`id`, `name`, `type`, `price`, `date`, `edite_by`) VALUES
 (26, 'defaultCorners', 'Packaging Defaults', 6.500, '2026-01-26', 'anass'),
 (27, 'defaultTickets', 'Packaging Defaults', 3.200, '2026-01-26', 'anass'),
 (28, 'defaultPlastic', 'Packaging Defaults', 20.000, '2026-01-26', 'anass'),
-(29, 'defaultRent', 'Cost Defaults', 8556.000, '2026-01-30', 'test_fix'),
+(29, 'defaultRent', 'Cost Defaults', 1400.000, '2026-01-31', 'test'),
 (30, 'defaultEmployees', 'Cost Defaults', 28576.000, '2026-01-26', 'anass'),
-(31, 'defaultDiesel', 'Cost Defaults', 8403.000, '2026-01-26', 'anass'),
+(31, 'defaultDiesel', 'Cost Defaults', 8402.000, '2026-01-31', 'app'),
 (32, 'defaultElectricity', 'Cost Defaults', 1000.000, '2026-01-26', 'anass'),
-(33, 'defaultProduction', 'Cost Defaults', 20.000, '2026-01-26', 'anass'),
+(33, 'defaultProduction', 'Cost Defaults', 20.000, '2026-02-01', 'app'),
 (73, 'ST2CMABS180G', 'dressTypes', 105.000, '2026-01-28', 'Ahmed'),
-(74, 'ST8MM300G', 'dressTypes', 67.000, '2026-01-28', 'Ahmed'),
+(74, 'a300G', 'dressTypes', 67.000, '2026-01-28', 'Ahmed'),
 (75, 'ST300G', 'dressTypes', 52.000, '2026-01-28', 'Ahmed'),
 (76, 'TP300G', 'dressTypes', 46.000, '2026-01-28', 'Ahmed'),
 (77, 'TP180G', 'dressTypes', 45.000, '2026-01-28', 'Ahmed'),
-(90, 'defaultWater', 'Cost Defaults', 0.000, '2026-01-30', 'system'),
-(91, 'defaultInternet', 'Cost Defaults', 0.000, '2026-01-30', 'system'),
-(92, 'defaultMaintenance', 'Cost Defaults', 0.000, '2026-01-30', 'system'),
-(93, 'defaultTransport', 'Cost Defaults', 0.000, '2026-01-30', 'system'),
-(94, 'defaultMarketing', 'Cost Defaults', 0.000, '2026-01-30', 'system'),
-(95, 'defaultOtherMonthly', 'Cost Defaults', 0.000, '2026-01-30', 'system'),
+(90, 'defaultWater', 'Cost Defaults', 23.000, '2026-01-30', 'system'),
+(91, 'defaultInternet', 'Cost Defaults', 11.000, '2026-02-01', 'app'),
+(92, 'defaultMaintenance', 'Cost Defaults', 44.000, '2026-02-01', 'app'),
+(93, 'defaultTransport', 'Cost Defaults', 22.000, '2026-02-01', 'app'),
+(94, 'defaultMarketing', 'Cost Defaults', 33.000, '2026-02-01', 'app'),
+(95, 'defaultOtherMonthly', 'Cost Defaults', 55.000, '2026-02-01', 'app'),
 (100, 'defaultScotch', 'Packaging Defaults', 0.000, '2026-01-30', 'system'),
 (101, 'defaultOtherPackaging', 'Packaging Defaults', 0.000, '2026-01-30', 'system'),
 (107, 'defaultThread', 'sfifa', 0.000, '2026-01-30', 'system'),
-(111, 'defaultSpringSachet', 'spring', 400.000, '2026-01-30', 'anass');
+(111, 'defaultSpringSachet', 'spring', 402.000, '2026-02-01', 'app');
 
 -- --------------------------------------------------------
 
@@ -91,24 +91,14 @@ CREATE TABLE `tarif` (
   `name` varchar(50) NOT NULL,
   `size` varchar(20) NOT NULL,
   `id_price` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
 --
 -- Dumping data for table `tarif`
 --
 
 INSERT INTO `tarif` (`id`, `ref_mattress`, `name`, `size`, `id_price`) VALUES
-(1, 'ABS-190-160', 'ABS', '190/160', 1),
-(2, 'HR-190-150', 'HR', '190/150', 2),
-(3, 'NEW190140', 'NEWDORSAL', '190/140', 3),
-(4, 'ABS-190-140', 'ABS', '190/140', 1),
-(5, 'ND-190-150', 'NEWDORSAL', '190/150', 3),
-(6, 'REF-1769732240647', 'ST8MM300G', '145/145', 4),
-(7, 'REF-1769732471513', 'ST8MM300G', '10/12', 5),
-(8, 'REF-1769769167707', 'ST8MM300G', '1/12', 6),
-(9, 'REF-1769769190837', 'ST8MM300G', '145/145', 7),
-(10, 'REF-1769771659406', 'ST8MM300G', '1/1', 8),
-(11, 'REF-1769772731259', 'ST8MM300G', '1/1', 9);
+(25, 'REF-1769902126845', 'ST2CMABS180G', '190/140', 23);
 
 -- --------------------------------------------------------
 
@@ -126,35 +116,20 @@ CREATE TABLE `tarif_details` (
   `packaging_price` decimal(10,2) DEFAULT 0.00,
   `cost_price` decimal(10,2) DEFAULT 0.00,
   `profit_price` decimal(10,3) DEFAULT 0.000,
-  `la_marge` int(3) NOT NULL,
+  `la_marge` int(3) NOT NULL DEFAULT 0,
   `final_price` decimal(10,2) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
 --
 -- Dumping data for table `tarif_details`
 --
 
 INSERT INTO `tarif_details` (`id`, `sponge_price`, `springs_price`, `dress_price`, `sfifa_price`, `footer_price`, `packaging_price`, `cost_price`, `profit_price`, `la_marge`, `final_price`) VALUES
-(1, 200.00, 150.00, 80.00, 20.00, 30.00, 10.00, 490.00, 0.000, 250, 1251.00),
-(2, 190.00, 145.00, 75.00, 20.00, 30.00, 10.00, 470.00, 0.000, 0, 536.00),
-(3, 180.00, 130.00, 70.00, 18.00, 25.00, 10.00, 433.00, 0.000, 0, 503.00),
-(4, 0.00, 2083895.98, 37775.92, 4279.00, 0.00, 49.20, 88.41, 0.000, 0, 2126088.52),
-(5, 0.00, 0.00, 4.00, 0.00, 0.00, 49.20, 88.41, 0.000, 0, 141.61),
-(6, 0.00, 0.00, 4.00, 214.74, 0.00, 0.00, 89.49, 0.000, 0, 308.23),
-(7, 0.00, 0.00, 4.00, 4279.00, 0.00, 0.00, 89.49, 0.000, 0, 4372.49),
-(8, 0.00, 180.89, 381.72, 58.63, 24.98, 49.20, 89.49, 196.226, 0, 981.13),
-(9, 0.00, 0.00, 264.50, 45.40, 23.76, 49.20, 89.49, 141.704, 0, 614.05);
+(23, 0.00, 232.25, 592.55, 3.63, 63.20, 49.20, 75.77, 254.150, 0, 1270.75);
 
 --
 -- Indexes for dumped tables
 --
-
---
--- Indexes for table `prices`
---
-ALTER TABLE `prices`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `name` (`name`);
 
 --
 -- Indexes for table `tarif`
@@ -171,26 +146,32 @@ ALTER TABLE `tarif_details`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `prices`
+--
+ALTER TABLE `prices`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
+
+--
+-- AUTO_INCREMENT for table `tarif`
+--
+ALTER TABLE `tarif`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+
+--
+-- AUTO_INCREMENT for table `tarif_details`
+--
+ALTER TABLE `tarif_details`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `prices`
 --
 ALTER TABLE `prices`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=112;
-
---
--- AUTO_INCREMENT for table `tarif`
---
-ALTER TABLE `tarif`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
-
---
--- AUTO_INCREMENT for table `tarif_details`
---
-ALTER TABLE `tarif_details`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- Constraints for dumped tables

@@ -37,6 +37,7 @@ class CostsProvider extends ChangeNotifier {
 
   // ===== Springs Section =====
   double _springValue = CostsConstants.defaultSpringValue;
+  double _springSachet = CostsConstants.defaultSpringSachet;
 
   // ===== Material Types Section =====
   Map<String, double> _spongeTypes = {};
@@ -77,6 +78,7 @@ class CostsProvider extends ChangeNotifier {
   double get scotch => _scotch;
   double get otherPackaging => _otherPackaging;
   double get springValue => _springValue;
+  double get springSachet => _springSachet;
   Map<String, double> get spongeTypes => _spongeTypes;
   Map<String, double> get dressTypes => _dressTypes;
   Map<String, double> get footerTypes => _footerTypes;
@@ -105,7 +107,7 @@ class CostsProvider extends ChangeNotifier {
 
   // ========== API INTEGRATION ==========
 
-  /// Load costs from API
+  /// Load costs from API (always fetches fresh data)
   Future<void> fetchCosts() async {
     if (_isLoading) return;
 
@@ -181,6 +183,10 @@ class CostsProvider extends ChangeNotifier {
         _springValue = data.getSprings(
           'defaultSpringValue',
           data.getSprings('springValue', _springValue),
+        );
+        _springSachet = data.getSprings(
+          'defaultSpringSachet',
+          data.getSprings('springSachet', _springSachet),
         );
 
         // New Monthly Fields
@@ -361,7 +367,13 @@ class CostsProvider extends ChangeNotifier {
 
   void setSpringValue(double value) {
     _springValue = value;
-    _updateCost('defaultSpringValue', 'spring', value); // 'spring' category
+    _updateCost('defaultSpringValue', 'spring', value);
+    notifyListeners();
+  }
+
+  void setSpringSachet(double value) {
+    _springSachet = value;
+    _updateCost('defaultSpringSachet', 'spring', value);
     notifyListeners();
   }
 
@@ -460,6 +472,7 @@ class CostsProvider extends ChangeNotifier {
     _electricity = CostsConstants.defaultElectricity;
     _production = CostsConstants.defaultProduction;
     _springValue = CostsConstants.defaultSpringValue;
+    _springSachet = CostsConstants.defaultSpringSachet;
     _water = CostsConstants.defaultWater;
     _internet = CostsConstants.defaultInternet;
     _maintenance = CostsConstants.defaultMaintenance;

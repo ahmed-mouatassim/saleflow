@@ -38,6 +38,9 @@ class CostsConstants {
 
   // New Sfifa Defaults
   static const double defaultThread = 0.0;
+
+  // Spring Defaults
+  static const double defaultSpringSachet = 0.0;
 }
 
 /// ===== Costs Theme =====

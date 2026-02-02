@@ -63,7 +63,7 @@ class MattressPricesTheme {
   );
 
   // أنماط النص الافتراضية
-  static const TextStyle TajawalStyle = TextStyle(fontFamily: 'Tajawal');
+  static const TextStyle tajawalStyle = TextStyle(fontFamily: 'Tajawal');
 }
 
 /// أبعاد الجدول

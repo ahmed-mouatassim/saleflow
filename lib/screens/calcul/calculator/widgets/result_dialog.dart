@@ -36,15 +36,40 @@ class _ResultDialogState extends State<ResultDialog> {
   final GlobalKey _repaintBoundaryKey = GlobalKey();
 
   Future<void> _saveOrUpdateTarif(BuildContext context) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
     setState(() => _isSaving = true);
 
     try {
       TarifApiResponse response;
 
-      if (widget.isEditMode && widget.tarifId != null) {
-        // وضع التعديل
+      // Check for existing tarif if not in edit mode
+      int? targetId = widget.tarifId;
+      bool performUpdate = widget.isEditMode && widget.tarifId != null;
+
+      if (!performUpdate) {
+        // Fetch existing data to check for duplicates
+        final checkResponse = await TarifApiService.fetchTarifDetails();
+        if (checkResponse.success && checkResponse.data != null) {
+          try {
+            final existing = checkResponse.data!.firstWhere(
+              (t) =>
+                  t.name == widget.mattressName &&
+                  t.size == widget.mattressSize,
+            );
+            // Found existing record! Switch to update mode
+            targetId = existing.id;
+            performUpdate = true;
+          } catch (_) {
+            // No duplicate found, proceed with create
+          }
+        }
+      }
+
+      if (performUpdate && targetId != null) {
+        // وضع التعديل (أو التحديث التلقائي)
         response = await TarifApiService.updateTarif(
-          id: widget.tarifId!,
+          id: targetId,
           name: widget.mattressName,
           size: widget.mattressSize,
           spongePrice: widget.result.spongePrice,
@@ -78,20 +103,20 @@ class _ResultDialogState extends State<ResultDialog> {
         setState(() => _isSaving = false);
 
         if (response.success) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
+          navigator.pop();
+          scaffoldMessenger.showSnackBar(
             SnackBar(
               content: Text(
-                widget.isEditMode
-                    ? 'تم تعديل التسعيرة بنجاح'
-                    : 'تم حفظ التسعيرة بنجاح',
+                performUpdate
+                    ? 'تم تحديث التسعيرة الموجودة بنجاح'
+                    : 'تم حفظ التسعيرة الجديدة بنجاح',
                 style: const TextStyle(fontFamily: 'Tajawal'),
               ),
               backgroundColor: Colors.green,
             ),
           );
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
+          scaffoldMessenger.showSnackBar(
             SnackBar(
               content: Text(
                 response.message ?? 'فشل الحفظ',
@@ -105,7 +130,7 @@ class _ResultDialogState extends State<ResultDialog> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessenger.showSnackBar(
           SnackBar(
             content: Text(
               'خطأ: $e',
@@ -119,6 +144,7 @@ class _ResultDialogState extends State<ResultDialog> {
   }
 
   Future<void> _shareAsImage(BuildContext context) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
     setState(() => _isSharing = true);
 
     try {
@@ -155,7 +181,7 @@ class _ResultDialogState extends State<ResultDialog> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSharing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessenger.showSnackBar(
           SnackBar(
             content: Text(
               'فشل المشاركة: $e',

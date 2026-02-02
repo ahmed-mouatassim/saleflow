@@ -7,6 +7,7 @@ import 'constants/calc_constants.dart';
 import 'widgets/calc_button.dart';
 import 'widgets/calc_dropdown.dart';
 import 'widgets/calc_text_field.dart';
+import 'widgets/product_name_selector.dart';
 import 'widgets/result_dialog.dart';
 import 'widgets/section_title.dart';
 import 'widgets/sponge_layer_card.dart';
@@ -108,205 +109,41 @@ class _CalcScreenContent extends StatelessWidget {
     );
   }
 
-  // // ===== APP BAR =====
-  // Widget _buildAppBar(BuildContext context, bool isDark, bool isEmbedded) {
-  //   return SliverAppBar(
-  //     expandedHeight: 180,
-  //     floating: true,
-  //     pinned: true,
-  //     centerTitle: true,
-  //     elevation: 0,
-  //     backgroundColor: Colors.transparent,
-  //     leading: isEmbedded
-  //         ? const SizedBox.shrink()
-  //         : Container(
-  //             margin: const EdgeInsets.all(8),
-  //             decoration: BoxDecoration(
-  //               color: Colors.white.withValues(alpha: 0.15),
-  //               borderRadius: BorderRadius.circular(12),
-  //               border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-  //             ),
-  //             child: IconButton(
-  //               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-  //               color: Colors.white,
-  //               onPressed: () => Navigator.of(context).pop(),
-  //             ),
-  //           ),
-  //     automaticallyImplyLeading: !isEmbedded,
-  //     flexibleSpace: ClipRRect(
-  //       borderRadius: const BorderRadius.only(
-  //         bottomLeft: Radius.circular(32),
-  //         bottomRight: Radius.circular(32),
-  //       ),
-  //       child: FlexibleSpaceBar(
-  //         titlePadding: const EdgeInsets.only(right: 16, bottom: 24, left: 60),
-  //         title: Row(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             Container(
-  //               padding: const EdgeInsets.all(8),
-  //               decoration: BoxDecoration(
-  //                 color: Colors.white.withValues(alpha: 0.2),
-  //                 borderRadius: BorderRadius.circular(12),
-  //                 border: Border.all(
-  //                   color: Colors.white.withValues(alpha: 0.3),
-  //                   width: 1.5,
-  //                 ),
-  //               ),
-  //               child: const Icon(
-  //                 Icons.calculate_rounded,
-  //                 color: Colors.white,
-  //                 size: 20,
-  //               ),
-  //             ),
-  //             const SizedBox(width: 12),
-  //             const Text(
-  //               'حاسبة الأسعار الشاملة',
-  //               style: TextStyle(
-  //                 fontFamily: 'Tajawal',
-  //                 fontWeight: FontWeight.bold,
-  //                 fontSize: 16,
-  //                 color: Colors.white,
-  //                 shadows: [
-  //                   Shadow(
-  //                     color: Colors.black26,
-  //                     blurRadius: 10,
-  //                     offset: Offset(0, 2),
-  //                   ),
-  //                 ],
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //         background: Container(
-  //           decoration: const BoxDecoration(
-  //             gradient: CalcTheme.headerGradient,
-  //             borderRadius: BorderRadius.only(
-  //               bottomLeft: Radius.circular(32),
-  //               bottomRight: Radius.circular(32),
-  //             ),
-  //           ),
-  //           child: Stack(
-  //             children: [
-  //               // Animated background shapes
-  //               Positioned(
-  //                 right: -40,
-  //                 top: -60,
-  //                 child: Container(
-  //                   width: 200,
-  //                   height: 200,
-  //                   decoration: BoxDecoration(
-  //                     shape: BoxShape.circle,
-  //                     gradient: RadialGradient(
-  //                       colors: [
-  //                         Colors.white.withValues(alpha: 0.15),
-  //                         Colors.white.withValues(alpha: 0.0),
-  //                       ],
-  //                     ),
-  //                   ),
-  //                 ),
-  //               ),
-  //               Positioned(
-  //                 left: -30,
-  //                 bottom: -50,
-  //                 child: Container(
-  //                   width: 150,
-  //                   height: 150,
-  //                   decoration: BoxDecoration(
-  //                     shape: BoxShape.circle,
-  //                     gradient: RadialGradient(
-  //                       colors: [
-  //                         CalcTheme.shimmer.withValues(alpha: 0.2),
-  //                         CalcTheme.shimmer.withValues(alpha: 0.0),
-  //                       ],
-  //                     ),
-  //                   ),
-  //                 ),
-  //               ),
-  //               Positioned(
-  //                 right: 60,
-  //                 bottom: 30,
-  //                 child: Container(
-  //                   width: 80,
-  //                   height: 80,
-  //                   decoration: BoxDecoration(
-  //                     shape: BoxShape.circle,
-  //                     gradient: RadialGradient(
-  //                       colors: [
-  //                         CalcTheme.accent.withValues(alpha: 0.25),
-  //                         CalcTheme.accent.withValues(alpha: 0.0),
-  //                       ],
-  //                     ),
-  //                   ),
-  //                 ),
-  //               ),
-  //               // Geometric decorations
-  //               Positioned(
-  //                 left: 40,
-  //                 top: 50,
-  //                 child: Transform.rotate(
-  //                   angle: 0.5,
-  //                   child: Container(
-  //                     width: 50,
-  //                     height: 50,
-  //                     decoration: BoxDecoration(
-  //                       borderRadius: BorderRadius.circular(12),
-  //                       border: Border.all(
-  //                         color: Colors.white.withValues(alpha: 0.1),
-  //                         width: 2,
-  //                       ),
-  //                     ),
-  //                   ),
-  //                 ),
-  //               ),
-  //               Positioned(
-  //                 right: 120,
-  //                 top: 30,
-  //                 child: Container(
-  //                   width: 30,
-  //                   height: 30,
-  //                   decoration: BoxDecoration(
-  //                     color: Colors.white.withValues(alpha: 0.1),
-  //                     borderRadius: BorderRadius.circular(8),
-  //                   ),
-  //                 ),
-  //               ),
-  //               // Subtle mesh pattern overlay
-  //               Positioned.fill(
-  //                 child: ClipRRect(
-  //                   borderRadius: const BorderRadius.only(
-  //                     bottomLeft: Radius.circular(32),
-  //                     bottomRight: Radius.circular(32),
-  //                   ),
-  //                   child: CustomPaint(painter: _MeshPatternPainter()),
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
   // ===== BASIC DIMENSIONS =====
   Widget _buildBasicDimensionsSection(
     BuildContext context,
     CalculatorProvider provider,
     bool isDark,
   ) {
+    final dataProvider = context.watch<CalcDataProvider>();
+
     return Column(
       children: [
         const SectionTitle(
           title: 'الأبعاد الأساسية',
           icon: Icons.straighten_rounded,
         ),
+        // Product Name Selector
+        ProductNameSelector(
+          productNames: dataProvider.uniqueProductNames,
+          selectedName: provider.selectedProductName,
+          isCustomName: provider.isCustomName,
+          isLoading: dataProvider.isTarifLoading,
+          onNameSelected: (name) {
+            provider.setProductName(name);
+          },
+          onCustomNameEntered: (name) {
+            provider.setCustomProductName(name);
+          },
+        ),
+        const SizedBox(height: 16),
+        // Height and Width Fields
         Row(
           children: [
             Expanded(
               child: CalcTextField(
-                label: 'الطول',
-                hint: 'أدخل الطول',
+                label: 'الطول (cm)',
+                hint: 'أدخل الطول بالسنتيمتر',
                 prefixIcon: Icons.straighten_rounded,
                 controller: provider.heightController,
                 onChanged: (value) {
@@ -317,8 +154,8 @@ class _CalcScreenContent extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: CalcTextField(
-                label: 'العرض',
-                hint: 'أدخل العرض',
+                label: 'العرض (cm)',
+                hint: 'أدخل العرض بالسنتيمتر',
                 prefixIcon: Icons.swap_horiz_rounded,
                 controller: provider.widthController,
                 onChanged: (value) {
@@ -821,14 +658,52 @@ class _CalcScreenContent extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           child: IgnorePointer(
             ignoring: !isEnabled,
-            child: CalcDropdown<String>(
-              label: 'نوع الروسول',
-              hint: 'اختر نوع الروسول',
-              value: provider.springType,
-              items: const ['normal', 'sachet'],
-              itemLabel: (item) =>
-                  item == 'normal' ? 'روسول عادي' : 'روسول En Sachet',
-              onChanged: (type) => provider.setSpringType(type ?? 'normal'),
+            child: Builder(
+              builder: (context) {
+                // Get spring types from API (مثل الفوتر)
+                final dataProvider = context.watch<CalcDataProvider>();
+                final springTypes = dataProvider.springTypes;
+
+                // If no items from API, show loading
+                if (springTypes.isEmpty && dataProvider.isLoading) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: CircularProgressIndicator(
+                        color: CalcTheme.primaryStart,
+                      ),
+                    ),
+                  );
+                }
+
+                // If still empty, show message
+                if (springTypes.isEmpty) {
+                  return Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: CalcTheme.warning.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'لا توجد أنواع روسول - قم بإضافتها من إدارة المواد',
+                      style: TextStyle(
+                        fontFamily: 'Tajawal',
+                        color: CalcTheme.warning,
+                      ),
+                    ),
+                  );
+                }
+
+                // Use names directly from API (like footer)
+                return CalcDropdown<String>(
+                  label: 'نوع الروسول',
+                  hint: 'اختر نوع الروسول',
+                  value: provider.selectedSpringType,
+                  items: springTypes.keys.toList(),
+                  itemLabel: (item) => item, // Use API name directly
+                  onChanged: (type) => provider.setSpringType(type),
+                );
+              },
             ),
           ),
         ),
@@ -1074,8 +949,11 @@ class _CalcScreenContent extends StatelessWidget {
         HapticFeedback.mediumImpact();
         final result = provider.calculate();
         if (result != null) {
-          final name = provider.selectedDressType ?? 'مرتبة مخصصة';
-          final size = '${provider.height.toInt()}/${provider.width.toInt()}';
+          final name = provider.selectedProductName ?? 'مرتبة مخصصة';
+          // تحويل الأبعاد من متر إلى سنتيمتر للتخزين (الطول × 100)
+          final heightCm = (provider.height * 100).round();
+          final widthCm = (provider.width * 100).round();
+          final size = '$heightCm/$widthCm';
 
           showDialog(
             context: context,
@@ -1083,6 +961,8 @@ class _CalcScreenContent extends StatelessWidget {
               result: result,
               mattressName: name,
               mattressSize: size,
+              isEditMode: provider.isEditMode,
+              tarifId: provider.tarifId,
             ),
           );
         }

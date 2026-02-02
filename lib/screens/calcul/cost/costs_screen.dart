@@ -39,7 +39,7 @@ class _CostsScreenState extends State<CostsScreen> {
                 slivers: [
                   // Header
                   if (!widget.isEmbedded)
-                    SliverToBoxAdapter(child: _buildHeader(context)),
+                    SliverToBoxAdapter(child: _buildHeader(context, costs)),
 
                   // Content - مفتاح يتغير عند إعادة التعيين
                   SliverToBoxAdapter(
@@ -94,7 +94,7 @@ class _CostsScreenState extends State<CostsScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, CostsProvider costs) {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -109,9 +109,9 @@ class _CostsScreenState extends State<CostsScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
+                color: Colors.white.withValues(alpha: .1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                border: Border.all(color: Colors.white.withValues(alpha: .2)),
               ),
               child: const Icon(
                 Icons.arrow_back_ios_new_rounded,
@@ -146,6 +146,57 @@ class _CostsScreenState extends State<CostsScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+
+          // زر التحديث
+          GestureDetector(
+            onTap: costs.isLoading
+                ? null
+                : () async {
+                    HapticFeedback.lightImpact();
+                    // مسح الكاش وإعادة جلب البيانات
+                    await costs.fetchCosts();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            costs.error ?? 'تم تحديث البيانات بنجاح',
+                            style: const TextStyle(fontFamily: 'Tajawal'),
+                          ),
+                          backgroundColor: costs.error != null
+                              ? Colors.red.shade700
+                              : Colors.green.shade700,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+              ),
+              child: costs.isLoading
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.refresh_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
             ),
           ),
         ],
@@ -480,6 +531,21 @@ class _CostsScreenState extends State<CostsScreen> {
                 onChanged: (value) {
                   costs.setSpringValue(
                     double.tryParse(value) ?? CostsConstants.defaultSpringValue,
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: CalcTextField(
+                label: 'روسول En Sachet',
+                hint: 'سعر الوحدة',
+                initialValue: costs.springSachet.toString(),
+                prefixIcon: Icons.attach_money_rounded,
+                onChanged: (value) {
+                  costs.setSpringSachet(
+                    double.tryParse(value) ??
+                        CostsConstants.defaultSpringSachet,
                   );
                 },
               ),

@@ -9,58 +9,15 @@ import 'package:http/http.dart' as http;
 class CostsApiService {
   CostsApiService._();
 
-  /// API Base URL
-  static String get baseUrl {
-    // Production: cPanel server
-    const productionUrl = 'https://alidor.ma';
-
-    // Development: Local server
-    if (kDebugMode) {
-      if (kIsWeb) {
-        return 'http://localhost/saleflow_APIs/public_html';
-      }
-      // For mobile emulators/simulators
-      if (Platform.isAndroid) {
-        return 'http://10.0.2.2/saleflow_APIs/public_html';
-      }
-      return 'http://localhost/saleflow_APIs/public_html';
-    }
-
-    // Production mode
-    return productionUrl;
-  }
+  /// API Base URL - Production server only
+  static const String baseUrl = 'https://alidor.ma';
 
   /// Request timeout duration
-  static const Duration timeout = Duration(seconds: 15);
-
-  /// Cached costs data
-  static CostsApiData? _cachedData;
-  static DateTime? _cacheTime;
-  static const Duration _cacheDuration = Duration(minutes: 5);
-
-  /// Clear cache to force refresh
-  static void clearCache() {
-    _cachedData = null;
-    _cacheTime = null;
-  }
+  static const Duration timeout = Duration(seconds: 30);
 
   /// Fetch all costs from the database
-  /// Returns structured data grouped by category
-  static Future<CostsApiResponse> fetchCosts({
-    bool forceRefresh = false,
-  }) async {
-    // Return cached data if valid
-    if (!forceRefresh && _cachedData != null && _cacheTime != null) {
-      final cacheAge = DateTime.now().difference(_cacheTime!);
-      if (cacheAge < _cacheDuration) {
-        return CostsApiResponse(
-          success: true,
-          data: _cachedData,
-          message: 'تم التحميل من الذاكرة المؤقتة',
-        );
-      }
-    }
-
+  /// Returns structured data grouped by category (always fetches from API)
+  static Future<CostsApiResponse> fetchCosts() async {
     try {
       // Updated to use prices endpoint
       final response = await http
@@ -74,10 +31,6 @@ class CostsApiService {
           final data = json['data'] as Map<String, dynamic>;
           // summary is not returned by prices API, it will be calculated on client side or null
           final apiData = _parseApiData(data);
-
-          // Update cache
-          _cachedData = apiData;
-          _cacheTime = DateTime.now();
 
           return CostsApiResponse(
             success: true,
@@ -268,7 +221,6 @@ class CostsApiService {
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
         if (json['success'] == true) {
-          clearCache();
           return CostsApiResponse(
             success: true,
             message: json['message'] as String? ?? 'تم تحديث التكلفة بنجاح',
@@ -280,6 +232,16 @@ class CostsApiService {
       return CostsApiResponse(
         success: false,
         message: json['error'] as String? ?? 'فشل في تحديث التكلفة',
+      );
+    } on SocketException {
+      return CostsApiResponse(
+        success: false,
+        message: 'لا يمكن الاتصال بالخادم. تحقق من اتصالك بالإنترنت.',
+      );
+    } on TimeoutException {
+      return CostsApiResponse(
+        success: false,
+        message: 'انتهت مهلة الاتصال. حاول مرة أخرى.',
       );
     } catch (e) {
       debugPrint('CostsApiService.updateCost error: $e');
@@ -332,7 +294,6 @@ class CostsApiService {
       if (response.statusCode == 201 || response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
         if (json['success'] == true) {
-          clearCache();
           return CostsApiResponse(
             success: true,
             message: json['message'] as String? ?? 'تم إنشاء السعر بنجاح',
@@ -344,6 +305,16 @@ class CostsApiService {
       return CostsApiResponse(
         success: false,
         message: json['error'] as String? ?? 'فشل في إنشاء السعر',
+      );
+    } on SocketException {
+      return CostsApiResponse(
+        success: false,
+        message: 'لا يمكن الاتصال بالخادم. تحقق من اتصالك بالإنترنت.',
+      );
+    } on TimeoutException {
+      return CostsApiResponse(
+        success: false,
+        message: 'انتهت مهلة الاتصال. حاول مرة أخرى.',
       );
     } catch (e) {
       debugPrint('CostsApiService.createCost error: $e');
@@ -394,7 +365,6 @@ class CostsApiService {
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
         if (json['success'] == true) {
-          clearCache();
           return CostsApiResponse(
             success: true,
             message: json['message'] as String? ?? 'تم الحذف بنجاح',
@@ -406,6 +376,16 @@ class CostsApiService {
       return CostsApiResponse(
         success: false,
         message: json['error'] as String? ?? 'فشل في الحذف',
+      );
+    } on SocketException {
+      return CostsApiResponse(
+        success: false,
+        message: 'لا يمكن الاتصال بالخادم. تحقق من اتصالك بالإنترنت.',
+      );
+    } on TimeoutException {
+      return CostsApiResponse(
+        success: false,
+        message: 'انتهت مهلة الاتصال. حاول مرة أخرى.',
       );
     } catch (e) {
       debugPrint('CostsApiService.deleteCost error: $e');

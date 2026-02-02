@@ -279,15 +279,15 @@ class _SpongeLayerCardState extends State<SpongeLayerCard> {
                         Expanded(
                           child: CalcTextField(
                             label: 'الطول',
-                            hint: '0.00',
-                            suffix: 'م',
+                            hint: '0',
+                            suffix: 'cm',
                             initialValue: widget.layer.height > 0
-                                ? widget.layer.height.toString()
+                                ? (widget.layer.height * 100).toStringAsFixed(0)
                                 : '',
                             prefixIcon: Icons.straighten_rounded,
                             onChanged: (value) {
                               final parsed = double.tryParse(value) ?? 0;
-                              widget.onHeightChanged(parsed);
+                              widget.onHeightChanged(parsed / 100.0);
                             },
                           ),
                         ),
@@ -295,15 +295,15 @@ class _SpongeLayerCardState extends State<SpongeLayerCard> {
                         Expanded(
                           child: CalcTextField(
                             label: 'العرض',
-                            hint: '0.00',
-                            suffix: 'م',
+                            hint: '0',
+                            suffix: 'cm',
                             initialValue: widget.layer.width > 0
-                                ? widget.layer.width.toString()
+                                ? (widget.layer.width * 100).toStringAsFixed(0)
                                 : '',
                             prefixIcon: Icons.swap_horiz_rounded,
                             onChanged: (value) {
                               final parsed = double.tryParse(value) ?? 0;
-                              widget.onWidthChanged(parsed);
+                              widget.onWidthChanged(parsed / 100.0);
                             },
                           ),
                         ),
@@ -311,15 +311,15 @@ class _SpongeLayerCardState extends State<SpongeLayerCard> {
                         Expanded(
                           child: CalcTextField(
                             label: 'الارتفاع',
-                            hint: '0.00',
-                            suffix: 'م',
+                            hint: '0',
+                            suffix: 'cm',
                             initialValue: widget.layer.length > 0
-                                ? widget.layer.length.toString()
+                                ? (widget.layer.length * 100).toStringAsFixed(0)
                                 : '',
                             prefixIcon: Icons.height_rounded,
                             onChanged: (value) {
                               final parsed = double.tryParse(value) ?? 0;
-                              widget.onLengthChanged(parsed);
+                              widget.onLengthChanged(parsed / 100.0);
                             },
                           ),
                         ),

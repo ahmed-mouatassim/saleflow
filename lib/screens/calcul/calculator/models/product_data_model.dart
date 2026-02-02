@@ -49,6 +49,7 @@ class CalcApiData {
   final Map<String, double> dressTypes;
   final Map<String, double> footerTypes;
   final Map<String, double> sfifaDefaults;
+  final Map<String, double> springTypes; // أنواع الروسول من الـ API
   final Map<String, double> packagingDefaults;
   final Map<String, double> costDefaults;
   final List<ProductData> allProducts;
@@ -58,6 +59,7 @@ class CalcApiData {
     required this.dressTypes,
     required this.footerTypes,
     required this.sfifaDefaults,
+    required this.springTypes,
     required this.packagingDefaults,
     required this.costDefaults,
     required this.allProducts,
@@ -96,9 +98,12 @@ class CalcApiData {
       sfifa[key] = value is double ? value : double.parse(value.toString());
     });
 
-    // إضافة spring إلى sfifa (من API الجديد)
+    // Parse spring types separately (من API)
     final springRaw = json['spring'] as Map<String, dynamic>? ?? {};
+    final spring = <String, double>{};
     springRaw.forEach((key, value) {
+      spring[key] = value is double ? value : double.parse(value.toString());
+      // Also add to sfifa for backward compatibility
       sfifa[key] = value is double ? value : double.parse(value.toString());
     });
 
@@ -133,6 +138,7 @@ class CalcApiData {
       dressTypes: dressTypes,
       footerTypes: footerTypes,
       sfifaDefaults: sfifa,
+      springTypes: spring,
       packagingDefaults: packaging,
       costDefaults: cost,
       allProducts: allProducts,

@@ -4,50 +4,22 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/product_data_model.dart';
+import '../models/tarif_data.dart';
 
 /// ===== Calculator API Service =====
 /// Handles HTTP requests to fetch/update prices from the database
 class CalcApiService {
   CalcApiService._();
 
-  /// API Base URL
-  static String get baseUrl {
-    // Production: cPanel server
-    // Always use production URL since local server is not configured
-    return 'https://alidor.ma';
-  }
+  /// API Base URL - Production server only
+  static const String baseUrl = 'https://alidor.ma';
 
   /// Request timeout duration
-  static const Duration timeout = Duration(seconds: 15);
-
-  /// Cached API data
-  static CalcApiData? _cachedData;
-  static DateTime? _cacheTime;
-  static const Duration _cacheDuration = Duration(minutes: 5);
-
-  /// Clear cache to force refresh
-  static void clearCache() {
-    _cachedData = null;
-    _cacheTime = null;
-  }
+  static const Duration timeout = Duration(seconds: 30);
 
   /// Fetch all product prices from the database
-  /// Returns structured data grouped by type
-  static Future<CalcApiResponse> fetchProducts({
-    bool forceRefresh = false,
-  }) async {
-    // Return cached data if valid
-    if (!forceRefresh && _cachedData != null && _cacheTime != null) {
-      final cacheAge = DateTime.now().difference(_cacheTime!);
-      if (cacheAge < _cacheDuration) {
-        return CalcApiResponse(
-          success: true,
-          data: _cachedData,
-          message: 'تم التحميل من الذاكرة المؤقتة',
-        );
-      }
-    }
-
+  /// Returns structured data grouped by type (always fetches from API)
+  static Future<CalcApiResponse> fetchProducts() async {
     try {
       final response = await http
           .get(Uri.parse('$baseUrl/api.php?endpoint=prices'))
@@ -59,10 +31,6 @@ class CalcApiService {
         if (json['success'] == true && json['data'] != null) {
           final data = json['data'] as Map<String, dynamic>;
           final apiData = _parseApiData(data);
-
-          // Update cache
-          _cachedData = apiData;
-          _cacheTime = DateTime.now();
 
           return CalcApiResponse(
             success: true,
@@ -144,6 +112,14 @@ class CalcApiService {
       });
     }
 
+    // Parse spring types separately (للاستخدام مباشرة من الـ API)
+    final Map<String, double> springTypes = {};
+    if (data['spring'] != null && data['spring'] is Map) {
+      (data['spring'] as Map<String, dynamic>).forEach((key, value) {
+        springTypes[key] = (value as num).toDouble();
+      });
+    }
+
     // Parse packaging defaults - دعم كلا الاسمين
     final Map<String, double> packagingDefaults = {};
     // أولاً نحاول الاسم الجديد من API
@@ -182,6 +158,7 @@ class CalcApiService {
       dressTypes: dressTypes,
       footerTypes: footerTypes,
       sfifaDefaults: sfifa,
+      springTypes: springTypes,
       packagingDefaults: packagingDefaults,
       costDefaults: costDefaults,
       allProducts: allProducts,
@@ -212,7 +189,6 @@ class CalcApiService {
       if (response.statusCode == 201 || response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
         if (json['success'] == true) {
-          clearCache(); // Clear cache so next fetch gets updated data
           return CalcApiResponse(
             success: true,
             message: json['message'] as String? ?? 'تم إنشاء السعر بنجاح',
@@ -265,7 +241,6 @@ class CalcApiService {
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
         if (json['success'] == true) {
-          clearCache();
           return CalcApiResponse(
             success: true,
             message: json['message'] as String? ?? 'تم تحديث السعر بنجاح',
@@ -311,7 +286,6 @@ class CalcApiService {
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
         if (json['success'] == true) {
-          clearCache();
           return CalcApiResponse(
             success: true,
             message: json['message'] as String? ?? 'تم حذف السعر بنجاح',
@@ -345,6 +319,57 @@ class CalcApiService {
     } catch (e) {
       debugPrint('CalcApiService connection check failed: $e');
       return false;
+    }
+  }
+
+  /// Fetch all tarif entries from the database
+  /// Returns list of tarif data with all pricing information
+  static Future<TarifApiResponse> fetchTarif() async {
+    try {
+      final response = await http
+          .get(Uri.parse('$baseUrl/api.php?endpoint=tarif'))
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        return TarifApiResponse.fromJson(json);
+      } else {
+        return TarifApiResponse(
+          success: false,
+          count: 0,
+          data: [],
+          message: 'فشل في الاتصال بالخادم: ${response.statusCode}',
+        );
+      }
+    } on SocketException {
+      return TarifApiResponse(
+        success: false,
+        count: 0,
+        data: [],
+        message: 'لا يمكن الاتصال بالخادم. تحقق من اتصالك بالإنترنت.',
+      );
+    } on TimeoutException {
+      return TarifApiResponse(
+        success: false,
+        count: 0,
+        data: [],
+        message: 'انتهت مهلة الاتصال. حاول مرة أخرى.',
+      );
+    } on FormatException {
+      return TarifApiResponse(
+        success: false,
+        count: 0,
+        data: [],
+        message: 'خطأ في تنسيق البيانات المستلمة.',
+      );
+    } catch (e) {
+      debugPrint('CalcApiService.fetchTarif error: $e');
+      return TarifApiResponse(
+        success: false,
+        count: 0,
+        data: [],
+        message: 'حدث خطأ غير متوقع: $e',
+      );
     }
   }
 }

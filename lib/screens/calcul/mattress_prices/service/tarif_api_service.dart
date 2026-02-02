@@ -10,50 +10,14 @@ import '../models/tarif_model.dart';
 class TarifApiService {
   TarifApiService._();
 
-  /// Cached tarif data
-  static List<TarifModel>? _cachedData;
-  static DateTime? _cacheTime;
-  static const Duration _cacheDuration = Duration(minutes: 5);
-
-  /// API Base URL
-  static String get baseUrl {
-    // Production: cPanel server
-    const productionUrl = 'https://alidor.ma';
-
-    // ملاحظة: للتطوير المحلي، غير useProduction إلى false
-    const useProduction = true;
-
-    if (useProduction) {
-      return productionUrl;
-    }
-  }
+  /// API Base URL - Production server only
+  static const String baseUrl = 'https://alidor.ma';
 
   /// Request timeout duration
-  static const Duration timeout = Duration(seconds: 15);
+  static const Duration timeout = Duration(seconds: 30);
 
-  /// Clear cache to force refresh
-  static void clearCache() {
-    _cachedData = null;
-    _cacheTime = null;
-  }
-
-  /// Fetch all tarif data with price details
-  /// Returns cached data if available and not expired
-  static Future<TarifApiResponse> fetchTarifDetails({
-    bool forceRefresh = false,
-  }) async {
-    // Return cached data if valid
-    if (!forceRefresh && _cachedData != null && _cacheTime != null) {
-      final cacheAge = DateTime.now().difference(_cacheTime!);
-      if (cacheAge < _cacheDuration) {
-        return TarifApiResponse(
-          success: true,
-          data: _cachedData!,
-          message: 'تم التحميل من الذاكرة المؤقتة',
-        );
-      }
-    }
-
+  /// Fetch all tarif data with price details (always fetches from API)
+  static Future<TarifApiResponse> fetchTarifDetails() async {
     try {
       final response = await http
           .get(Uri.parse('$baseUrl/api.php?endpoint=tarif'))
@@ -67,10 +31,6 @@ class TarifApiService {
           final data = dataList
               .map((item) => TarifModel.fromJson(item as Map<String, dynamic>))
               .toList();
-
-          // Update cache
-          _cachedData = data;
-          _cacheTime = DateTime.now();
 
           return TarifApiResponse(
             success: true,
@@ -128,43 +88,6 @@ class TarifApiService {
     }
   }
 
-  /// Get unique mattress names from cached data
-  static List<String> getMattressNames() {
-    if (_cachedData == null) return [];
-    final names = _cachedData!.map((t) => t.name).toSet().toList();
-    names.sort();
-    return names;
-  }
-
-  /// Get unique sizes from cached data
-  static List<String> getSizes() {
-    if (_cachedData == null) return [];
-    final sizes = _cachedData!.map((t) => t.size).toSet().toList();
-    // Sort by length then width
-    sizes.sort((a, b) {
-      final aParts = a.split('/');
-      final bParts = b.split('/');
-      if (aParts.length != 2 || bParts.length != 2) return a.compareTo(b);
-      final aLength = int.tryParse(aParts[0]) ?? 0;
-      final bLength = int.tryParse(bParts[0]) ?? 0;
-      if (aLength != bLength) return aLength.compareTo(bLength);
-      final aWidth = int.tryParse(aParts[1]) ?? 0;
-      final bWidth = int.tryParse(bParts[1]) ?? 0;
-      return aWidth.compareTo(bWidth);
-    });
-    return sizes;
-  }
-
-  /// Get tarif by name and size
-  static TarifModel? getTarif(String name, String size) {
-    if (_cachedData == null) return null;
-    try {
-      return _cachedData!.firstWhere((t) => t.name == name && t.size == size);
-    } catch (_) {
-      return null;
-    }
-  }
-
   /// Save new tarif to database
   static Future<TarifApiResponse> saveTarif({
     required String name,
@@ -178,12 +101,10 @@ class TarifApiService {
     required double costPrice,
     required double profitPrice,
     required double finalPrice,
+    int laMarge = 0,
     String? refMattress,
   }) async {
     try {
-      // Clear cache to ensure next fetch gets the new data
-      clearCache();
-
       // Generate a reference if not provided
       final ref = refMattress ?? 'REF-${DateTime.now().millisecondsSinceEpoch}';
 
@@ -203,6 +124,7 @@ class TarifApiService {
               'footer_price': footerPrice,
               'cost_price': costPrice,
               'profit_price': profitPrice,
+              'la_marge': laMarge,
               'final_price': finalPrice,
             }),
           )
@@ -220,6 +142,16 @@ class TarifApiService {
           message: 'فشل في الاتصال بالخادم: ${response.statusCode}',
         );
       }
+    } on SocketException {
+      return TarifApiResponse(
+        success: false,
+        message: 'لا يمكن الاتصال بالخادم. تحقق من اتصالك بالإنترنت.',
+      );
+    } on TimeoutException {
+      return TarifApiResponse(
+        success: false,
+        message: 'انتهت مهلة الاتصال. حاول مرة أخرى.',
+      );
     } catch (e) {
       debugPrint('TarifApiService.saveTarif error: $e');
       return TarifApiResponse(success: false, message: 'حدث خطأ: $e');
@@ -240,12 +172,10 @@ class TarifApiService {
     required double costPrice,
     required double profitPrice,
     required double finalPrice,
+    int laMarge = 0,
     String? refMattress,
   }) async {
     try {
-      // Clear cache to ensure next fetch gets the updated data
-      clearCache();
-
       final response = await http
           .put(
             Uri.parse('$baseUrl/api.php?endpoint=tarif'),
@@ -263,6 +193,7 @@ class TarifApiService {
               'footer_price': footerPrice,
               'cost_price': costPrice,
               'profit_price': profitPrice,
+              'la_marge': laMarge,
               'final_price': finalPrice,
             }),
           )
@@ -280,6 +211,16 @@ class TarifApiService {
           message: 'فشل في الاتصال بالخادم: ${response.statusCode}',
         );
       }
+    } on SocketException {
+      return TarifApiResponse(
+        success: false,
+        message: 'لا يمكن الاتصال بالخادم. تحقق من اتصالك بالإنترنت.',
+      );
+    } on TimeoutException {
+      return TarifApiResponse(
+        success: false,
+        message: 'انتهت مهلة الاتصال. حاول مرة أخرى.',
+      );
     } catch (e) {
       return TarifApiResponse(success: false, message: 'حدث خطأ: $e');
     }
@@ -288,9 +229,6 @@ class TarifApiService {
   /// Delete tarif from database
   static Future<TarifApiResponse> deleteTarif(int id) async {
     try {
-      // Clear cache to ensure next fetch gets the updated data
-      clearCache();
-
       final response = await http
           .delete(Uri.parse('$baseUrl/api.php?endpoint=tarif&id=$id'))
           .timeout(timeout);
@@ -307,6 +245,16 @@ class TarifApiService {
           message: 'فشل في الاتصال بالخادم: ${response.statusCode}',
         );
       }
+    } on SocketException {
+      return TarifApiResponse(
+        success: false,
+        message: 'لا يمكن الاتصال بالخادم. تحقق من اتصالك بالإنترنت.',
+      );
+    } on TimeoutException {
+      return TarifApiResponse(
+        success: false,
+        message: 'انتهت مهلة الاتصال. حاول مرة أخرى.',
+      );
     } catch (e) {
       debugPrint('TarifApiService.deleteTarif error: $e');
       return TarifApiResponse(success: false, message: 'حدث خطأ: $e');

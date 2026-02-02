@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:saleflow/screens/calcul/cost/provider/costs_provider.dart';
+import 'package:saleflow/screens/calcul/calculator/provider/calc_data_provider.dart';
 import 'core/app_theme.dart';
 import 'core/app_colors.dart';
 import 'core/responsive.dart';
@@ -27,9 +28,15 @@ void main() async {
   final costsProvider = CostsProvider();
   await costsProvider.fetchCosts();
 
+  // تحميل بيانات الحاسبة
+  final calcDataProvider = CalcDataProvider();
+
   runApp(
-    ChangeNotifierProvider.value(
-      value: costsProvider,
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: costsProvider),
+        ChangeNotifierProvider.value(value: calcDataProvider),
+      ],
       child: const SaleFlowApp(),
     ),
   );

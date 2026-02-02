@@ -75,47 +75,54 @@ class _HomeScreenState extends State<HomeScreen>
               ),
         ),
       ],
-      child: Scaffold(
-        body: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
+      builder: (context, child) {
+        return Scaffold(
+          body: Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF1A1A2E),
+                  Color(0xFF16213E),
+                  Color(0xFF0F3460),
+                ],
+              ),
             ),
-          ),
-          child: SafeArea(
-            child: Column(
-              children: [
-                // Header with Tab Bar
-                _buildTabBar(currentGradient),
+            child: SafeArea(
+              child: Column(
+                children: [
+                  // Header with Tab Bar
+                  _buildTabBar(currentGradient),
 
-                // Tab Content
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    physics: const BouncingScrollPhysics(),
-                    children: [
-                      // Tab 1: Calculator
-                      const _CalcTabContent(),
+                  // Tab Content
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      physics: const BouncingScrollPhysics(),
+                      children: [
+                        // Tab 1: Calculator
+                        const _CalcTabContent(),
 
-                      // Tab 2: Mattress Prices
-                      _PricesTabContent(
-                        onSwitchToCalculator: () => _tabController.animateTo(0),
-                      ),
+                        // Tab 2: Mattress Prices
+                        _PricesTabContent(
+                          onSwitchToCalculator: () =>
+                              _tabController.animateTo(0),
+                        ),
 
-                      // Tab 3: Costs
-                      const _CostsTabContent(),
-                    ],
+                        // Tab 3: Costs
+                        const _CostsTabContent(),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

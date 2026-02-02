@@ -69,16 +69,14 @@ class _MattressPricesScreenState extends State<MattressPricesScreen>
     _loadData();
   }
 
-  /// تحميل البيانات من قاعدة البيانات
-  Future<void> _loadData({bool forceRefresh = false}) async {
+  /// تحميل البيانات من قاعدة البيانات (always fresh from API)
+  Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
-    final response = await TarifApiService.fetchTarifDetails(
-      forceRefresh: forceRefresh,
-    );
+    final response = await TarifApiService.fetchTarifDetails();
 
     if (mounted) {
       setState(() {
@@ -258,7 +256,7 @@ class _MattressPricesScreenState extends State<MattressPricesScreen>
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () => _loadData(forceRefresh: true),
+              onPressed: () => _loadData(),
               icon: const Icon(Icons.refresh),
               label: const Text('إعادة المحاولة'),
               style: ElevatedButton.styleFrom(
@@ -318,7 +316,7 @@ class _MattressPricesScreenState extends State<MattressPricesScreen>
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () => _loadData(forceRefresh: true),
+              onPressed: () => _loadData(),
               icon: const Icon(Icons.refresh),
               label: const Text('تحديث'),
               style: ElevatedButton.styleFrom(
@@ -409,7 +407,7 @@ class _MattressPricesScreenState extends State<MattressPricesScreen>
 
   Widget _buildRefreshButton() {
     return GestureDetector(
-      onTap: _isLoading ? null : () => _loadData(forceRefresh: true),
+      onTap: _isLoading ? null : () => _loadData(),
       child: Container(
         width: 44,
         height: 44,
@@ -808,7 +806,7 @@ class _MattressPricesScreenState extends State<MattressPricesScreen>
           );
 
           if (response.success) {
-            _loadData(forceRefresh: true);
+            _loadData();
           }
         }
       } catch (e) {
@@ -1060,6 +1058,7 @@ class _MattressPricesScreenState extends State<MattressPricesScreen>
                       calcProvider.setHeight(height);
                       calcProvider.setWidth(width);
                       calcProvider.setDressType(mattressName);
+                      calcProvider.setTarifId(tarif.id); // Set ID for edit mode
 
                       // الانتقال إلى تبويب الحاسبة
                       if (widget.onSwitchToCalculator != null) {

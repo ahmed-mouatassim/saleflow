@@ -42,11 +42,11 @@ class CalculatorProvider extends ChangeNotifier {
 
   // ===== Sfifa Counts (variable per calculation) =====
   // ===== Sfifa Counts (variable per calculation) =====
-  int _sfifaNum1 = 3;
-  int _sfifaNum2 = 2;
-  int _sfifaNum3 = 2;
-  int _numChain = 2;
-  int _numElastic = 0;
+  int _sfifaNum1 = 0; // شريط 36mm
+  int _sfifaNum2 = 0; // شريط 18mm
+  int _sfifaNum3 = 0; // شريط 3D
+  int _numChain = 0; // عدد السلاسل
+  int _numElastic = 0; // عدد المطاط
 
   // ===== Toggle States =====
   bool _isFooterEnabled = true;
@@ -54,7 +54,7 @@ class CalculatorProvider extends ChangeNotifier {
   bool _isSpringEnabled = true;
 
   // ===== Spring Type =====
-  String _springType = 'normal'; // 'normal' or 'sachet'
+  String? _selectedSpringType; // نوع الروسول من الـ API (مثل الفوتر)
 
   // ===== Validation State =====
   final List<String> _validationErrors = [];
@@ -62,7 +62,20 @@ class CalculatorProvider extends ChangeNotifier {
   bool _isCalculating = false;
   double _profitMargin = 0; // % Percentage
 
+  // ===== Edit Mode State =====
+  int? _tarifId;
+  bool _isEditMode = false;
+
+  // ===== Product Name Selection =====
+  String? _selectedProductName;
+  bool _isCustomName = false; // True if user entered a new name not in API list
+
   // ========== GETTERS ==========
+
+  int? get tarifId => _tarifId;
+  bool get isEditMode => _isEditMode;
+  String? get selectedProductName => _selectedProductName;
+  bool get isCustomName => _isCustomName;
 
   double get height => _height;
   double get width => _width;
@@ -80,7 +93,7 @@ class CalculatorProvider extends ChangeNotifier {
   bool get isFooterEnabled => _isFooterEnabled;
   bool get isSfifaEnabled => _isSfifaEnabled;
   bool get isSpringEnabled => _isSpringEnabled;
-  String get springType => _springType;
+  String? get selectedSpringType => _selectedSpringType;
   List<String> get validationErrors => List.unmodifiable(_validationErrors);
   CalculationResult? get lastResult => _lastResult;
   bool get isCalculating => _isCalculating;
@@ -89,20 +102,23 @@ class CalculatorProvider extends ChangeNotifier {
 
   // ========== SETTERS ==========
 
-  void setHeight(double value) {
-    _height = value;
+  void setHeight(double valInCm) {
+    _height = valInCm / 100.0; // Store as meters
     final currentTextValue = double.tryParse(heightController.text) ?? 0;
-    if ((currentTextValue - value).abs() > 0.001) {
-      heightController.text = value == 0 ? '' : value.toString();
+
+    // Sync if text differs from input (formatting or external update)
+    if ((currentTextValue - valInCm).abs() > 0.1) {
+      heightController.text = valInCm == 0 ? '' : valInCm.toStringAsFixed(0);
     }
     notifyListeners();
   }
 
-  void setWidth(double value) {
-    _width = value;
+  void setWidth(double valInCm) {
+    _width = valInCm / 100.0; // Store as meters
     final currentTextValue = double.tryParse(widthController.text) ?? 0;
-    if ((currentTextValue - value).abs() > 0.001) {
-      widthController.text = value == 0 ? '' : value.toString();
+
+    if ((currentTextValue - valInCm).abs() > 0.1) {
+      widthController.text = valInCm == 0 ? '' : valInCm.toStringAsFixed(0);
     }
     notifyListeners();
   }
@@ -212,13 +228,33 @@ class CalculatorProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setSpringType(String type) {
-    _springType = type;
+  void setSpringType(String? type) {
+    _selectedSpringType = type;
     notifyListeners();
   }
 
   void setProfitMargin(double value) {
     _profitMargin = value;
+    notifyListeners();
+  }
+
+  void setTarifId(int? id) {
+    _tarifId = id;
+    _isEditMode = id != null;
+    notifyListeners();
+  }
+
+  /// Set product name from dropdown selection
+  void setProductName(String? name, {bool isCustom = false}) {
+    _selectedProductName = name;
+    _isCustomName = isCustom;
+    notifyListeners();
+  }
+
+  /// Set custom product name (user typed)
+  void setCustomProductName(String name) {
+    _selectedProductName = name.trim();
+    _isCustomName = true;
     notifyListeners();
   }
 
@@ -279,6 +315,11 @@ class CalculatorProvider extends ChangeNotifier {
       _validationErrors.add('عدد الإنتاج خاصو يكون أكبر من 0');
     }
 
+    // Validate profit margin (mandatory)
+    if (_profitMargin <= 0) {
+      _validationErrors.add('يجب اختيار هامش الربح');
+    }
+
     notifyListeners();
     return _validationErrors.isEmpty;
   }
@@ -307,8 +348,11 @@ class CalculatorProvider extends ChangeNotifier {
         final springSizeCalcOne = (_height - 0.10) * 12;
         final springSizeCalcTow = (_width - 0.10) * 9;
         final countOfSprings = springSizeCalcOne * springSizeCalcTow;
-        // Updated: Only use springValue (sachet removed)
-        final springUnitPrice = costsProvider.springValue;
+        // Use correct price based on spring type from API
+        final springUnitPrice =
+            _selectedSpringType?.toLowerCase().contains('sachet') == true
+            ? costsProvider.springSachet
+            : costsProvider.springValue;
         springsPrice = countOfSprings * springUnitPrice;
       }
 
@@ -408,19 +452,23 @@ class CalculatorProvider extends ChangeNotifier {
     _footerLayerCount = 0;
     _selectedDressType = null;
     _dressPrice = 0;
-    _sfifaNum1 = 3;
-    _sfifaNum2 = 2;
-    _sfifaNum3 = 2;
-    _numChain = 2;
+    _sfifaNum1 = 0;
+    _sfifaNum2 = 0;
+    _sfifaNum3 = 0;
+    _numChain = 0;
     _numElastic = 0;
     _isFooterEnabled = true;
     _isSfifaEnabled = true;
     _isSpringEnabled = true;
-    _springType = 'normal';
+    _selectedSpringType = null;
     _validationErrors.clear();
     _lastResult = null;
     _isCalculating = false;
     _profitMargin = 0;
+    _tarifId = null;
+    _isEditMode = false;
+    _selectedProductName = null;
+    _isCustomName = false;
     notifyListeners();
   }
 }

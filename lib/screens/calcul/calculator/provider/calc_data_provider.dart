@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/product_data_model.dart';
+import '../models/tarif_data.dart';
 import '../service/calc_api_service.dart';
 
 /// ===== Calculator Data Provider =====
@@ -8,6 +9,7 @@ import '../service/calc_api_service.dart';
 class CalcDataProvider extends ChangeNotifier {
   CalcDataProvider() {
     loadData();
+    loadTarifData();
   }
   // Loading state
   bool _isLoading = false;
@@ -17,6 +19,11 @@ class CalcDataProvider extends ChangeNotifier {
   // API data
   CalcApiData? _apiData;
 
+  // Tarif data
+  List<TarifData> _tarifList = [];
+  bool _isTarifLoading = false;
+  bool _isTarifLoaded = false;
+
   // ========== GETTERS ==========
 
   bool get isLoading => _isLoading;
@@ -24,6 +31,27 @@ class CalcDataProvider extends ChangeNotifier {
   bool get hasError => _errorMessage != null;
   String? get errorMessage => _errorMessage;
   CalcApiData? get apiData => _apiData;
+
+  // Tarif getters
+  List<TarifData> get tarifList => List.unmodifiable(_tarifList);
+  bool get isTarifLoading => _isTarifLoading;
+  bool get isTarifLoaded => _isTarifLoaded;
+
+  /// Get unique product names from tarif list
+  List<String> get uniqueProductNames {
+    final namesSet = <String>{};
+    for (final tarif in _tarifList) {
+      if (tarif.name.isNotEmpty) {
+        namesSet.add(tarif.name);
+      }
+    }
+    return namesSet.toList()..sort();
+  }
+
+  /// Get tarif entries by product name
+  List<TarifData> getTarifByName(String name) {
+    return _tarifList.where((t) => t.name == name).toList();
+  }
 
   /// Sponge types - from API only
   Map<String, int> get spongeTypes {
@@ -46,6 +74,34 @@ class CalcDataProvider extends ChangeNotifier {
     if (_apiData != null && _apiData!.footerTypes.isNotEmpty) {
       return _apiData!.footerTypes;
     }
+    return {};
+  }
+
+  /// Spring types from API - يستخدم الأسماء الحقيقية من allProducts
+  /// يجلب جميع المنتجات من نوع 'spring' بأسمائها الحقيقية
+  Map<String, double> get springTypes {
+    final springs = <String, double>{};
+
+    if (_apiData != null && _apiData!.allProducts.isNotEmpty) {
+      // جلب أنواع الروسول من allProducts باستخدام الاسم الحقيقي (name)
+      for (final product in _apiData!.allProducts) {
+        if (product.type == 'spring') {
+          springs[product.name] = product.price;
+        }
+      }
+    }
+
+    // إذا وجدنا بيانات من allProducts، نُرجعها
+    if (springs.isNotEmpty) {
+      return springs;
+    }
+
+    // Fallback: إذا لم تكن هناك بيانات spring في allProducts
+    // نستخدم springTypes القديمة (لكنها تحتوي على keys تقنية)
+    if (_apiData != null && _apiData!.springTypes.isNotEmpty) {
+      return _apiData!.springTypes;
+    }
+
     return {};
   }
 
@@ -159,6 +215,42 @@ class CalcDataProvider extends ChangeNotifier {
   Future<void> refresh() async {
     _isLoaded = false;
     await loadData();
+  }
+
+  /// Load tarif data from API
+  Future<void> loadTarifData() async {
+    if (_isTarifLoading) return;
+
+    _isTarifLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await CalcApiService.fetchTarif();
+
+      if (response.success) {
+        _tarifList = response.data;
+        _isTarifLoaded = true;
+        debugPrint(
+          'CalcDataProvider: Loaded ${_tarifList.length} tarif entries',
+        );
+        debugPrint(
+          'CalcDataProvider: Unique names: ${uniqueProductNames.length}',
+        );
+      } else {
+        debugPrint('CalcDataProvider: Tarif API error - ${response.message}');
+      }
+    } catch (e) {
+      debugPrint('CalcDataProvider: Tarif Exception - $e');
+    } finally {
+      _isTarifLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Reload tarif data from API
+  Future<void> refreshTarif() async {
+    _isTarifLoaded = false;
+    await loadTarifData();
   }
 
   /// Update a product's price
