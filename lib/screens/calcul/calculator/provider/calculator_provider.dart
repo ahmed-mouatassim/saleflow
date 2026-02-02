@@ -55,6 +55,7 @@ class CalculatorProvider extends ChangeNotifier {
 
   // ===== Spring Type =====
   String? _selectedSpringType; // نوع الروسول من الـ API (مثل الفوتر)
+  double _sachetSize = 0; // قياس الساشي بالمتر
 
   // ===== Validation State =====
   final List<String> _validationErrors = [];
@@ -99,6 +100,7 @@ class CalculatorProvider extends ChangeNotifier {
   bool get isCalculating => _isCalculating;
   double get profitMargin => _profitMargin;
   bool get hasErrors => _validationErrors.isNotEmpty;
+  double get sachetSize => _sachetSize;
 
   // ========== SETTERS ==========
 
@@ -126,7 +128,8 @@ class CalculatorProvider extends ChangeNotifier {
   // ===== Sponge Layer Management =====
 
   void addSpongeLayer() {
-    _spongeLayers.add(SpongeLayer());
+    // Initialize with current global dimensions to save user time
+    _spongeLayers.add(SpongeLayer(height: _height, width: _width));
     notifyListeners();
   }
 
@@ -233,6 +236,11 @@ class CalculatorProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setSachetSize(double value) {
+    _sachetSize = value;
+    notifyListeners();
+  }
+
   void setProfitMargin(double value) {
     _profitMargin = value;
     notifyListeners();
@@ -281,6 +289,19 @@ class CalculatorProvider extends ChangeNotifier {
       }
       if (layer.length <= 0) {
         _validationErrors.add('سمك الإسفنج للطبقة ${i + 1} مطلوب');
+      }
+    }
+
+    // Validate springs
+    if (_isSpringEnabled) {
+      final isSachet =
+          _selectedSpringType?.toLowerCase().contains('sachet') == true ||
+          _selectedSpringType?.contains('ساشي') == true;
+
+      if (isSachet) {
+        if (_sachetSize <= 0) {
+          _validationErrors.add('قياس الساشي مطلوب');
+        }
       }
     }
 
@@ -345,15 +366,20 @@ class CalculatorProvider extends ChangeNotifier {
       // {2} Springs Calculation (skip if disabled)
       double springsPrice = 0;
       if (_isSpringEnabled) {
-        final springSizeCalcOne = (_height - 0.10) * 12;
-        final springSizeCalcTow = (_width - 0.10) * 9;
-        final countOfSprings = springSizeCalcOne * springSizeCalcTow;
-        // Use correct price based on spring type from API
-        final springUnitPrice =
-            _selectedSpringType?.toLowerCase().contains('sachet') == true
-            ? costsProvider.springSachet
-            : costsProvider.springValue;
-        springsPrice = countOfSprings * springUnitPrice;
+        final isSachet =
+            _selectedSpringType?.toLowerCase().contains('sachet') == true ||
+            _selectedSpringType?.contains('ساشي') == true;
+
+        if (isSachet) {
+          // حساب الساشي: السعر * القياس المدخل
+          springsPrice = costsProvider.springSachet * _sachetSize;
+        } else {
+          // حساب الروسول العادي: المعادلة القديمة
+          final springSizeCalcOne = (_height - 0.10) * 12;
+          final springSizeCalcTow = (_width - 0.10) * 9;
+          final countOfSprings = springSizeCalcOne * springSizeCalcTow;
+          springsPrice = countOfSprings * costsProvider.springValue;
+        }
       }
 
       // {3} Dress Calculation
@@ -396,8 +422,8 @@ class CalculatorProvider extends ChangeNotifier {
       double spongePrice = 0;
       for (final layer in _spongeLayers) {
         if (layer.coefficient != null && layer.layerCount > 0) {
-          // استخدام الأبعاد الأساسية (الطول والعرض) مع سمك الإسفنج
-          final sizeOfLayer = _height * _width * layer.length;
+          // استخدام أبعاد الطبقة المحددة (الطول والعرض) بدلاً من الأبعاد العامة
+          final sizeOfLayer = layer.height * layer.width * layer.length;
           spongePrice += (sizeOfLayer * layer.coefficient!) * layer.layerCount;
         }
       }
@@ -461,6 +487,7 @@ class CalculatorProvider extends ChangeNotifier {
     _isSfifaEnabled = true;
     _isSpringEnabled = true;
     _selectedSpringType = null;
+    _sachetSize = 0;
     _validationErrors.clear();
     _lastResult = null;
     _isCalculating = false;

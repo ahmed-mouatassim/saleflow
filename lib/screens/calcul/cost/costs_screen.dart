@@ -538,7 +538,7 @@ class _CostsScreenState extends State<CostsScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: CalcTextField(
-                label: 'روسول En Sachet',
+                label: 'روسول ساشي',
                 hint: 'سعر الوحدة',
                 initialValue: costs.springSachet.toString(),
                 prefixIcon: Icons.attach_money_rounded,

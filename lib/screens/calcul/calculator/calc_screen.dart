@@ -707,6 +707,27 @@ class _CalcScreenContent extends StatelessWidget {
             ),
           ),
         ),
+
+        // Show measurement field if sachet is selected
+        if (isEnabled &&
+            (provider.selectedSpringType?.toLowerCase().contains('sachet') ==
+                    true ||
+                provider.selectedSpringType?.contains('ساشي') == true))
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: CalcTextField(
+              label: 'قياس الساشي (متر)',
+              hint: '0.0',
+              suffix: 'm',
+              initialValue: provider.sachetSize > 0
+                  ? provider.sachetSize.toString()
+                  : '',
+              prefixIcon: Icons.straighten_rounded,
+              onChanged: (value) {
+                provider.setSachetSize(double.tryParse(value) ?? 0);
+              },
+            ),
+          ),
       ],
     );
   }

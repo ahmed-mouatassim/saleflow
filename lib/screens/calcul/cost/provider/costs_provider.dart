@@ -181,12 +181,12 @@ class CostsProvider extends ChangeNotifier {
 
         // Springs costs
         _springValue = data.getSprings(
-          'defaultSpringValue',
-          data.getSprings('springValue', _springValue),
+          'روسول عادي',
+          data.getSprings('defaultSpringValue', _springValue),
         );
         _springSachet = data.getSprings(
-          'defaultSpringSachet',
-          data.getSprings('springSachet', _springSachet),
+          'روسول ساشي',
+          data.getSprings('defaultSpringSachet', _springSachet),
         );
 
         // New Monthly Fields
@@ -367,13 +367,13 @@ class CostsProvider extends ChangeNotifier {
 
   void setSpringValue(double value) {
     _springValue = value;
-    _updateCost('defaultSpringValue', 'spring', value);
+    _updateCost('روسول عادي', 'spring', value);
     notifyListeners();
   }
 
   void setSpringSachet(double value) {
     _springSachet = value;
-    _updateCost('defaultSpringSachet', 'spring', value);
+    _updateCost('روسول ساشي', 'spring', value);
     notifyListeners();
   }
 
