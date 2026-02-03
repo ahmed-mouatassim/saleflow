@@ -7,6 +7,11 @@ jobs:
   build-ios:
     name: 🎉 iOS Build
     runs-on: macos-latest
+    
+    # هاد الجزء هو اللي زدنا باش نعطيو صلاحية الكتابة (Write permission)
+    permissions:
+      contents: write
+
     steps:
       - uses: actions/checkout@v3
 
@@ -14,8 +19,9 @@ jobs:
         with:
           channel: 'stable'
           architecture: x64
-      - run: flutter pub get
       
+      - run: flutter pub get
+        
 
       - run: pod repo update
         working-directory: ios
