@@ -308,6 +308,13 @@ class _SpongeLayerCardState extends State<SpongeLayerCard> {
                           ),
                         ),
                         const SizedBox(width: 10),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Second Row: Dimensions
+                    Row(
+                      children: [
                         Expanded(
                           child: CalcTextField(
                             label: 'الارتفاع',

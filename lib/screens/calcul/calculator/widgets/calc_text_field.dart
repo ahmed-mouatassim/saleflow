@@ -21,7 +21,10 @@ class CalcTextField extends StatefulWidget {
     required this.label,
     required this.hint,
     this.initialValue,
-    this.keyboardType = const TextInputType.numberWithOptions(decimal: true),
+    this.keyboardType = const TextInputType.numberWithOptions(
+      decimal: true,
+      signed: true,
+    ),
     this.prefixIcon,
     this.onChanged,
     this.enabled = true,
@@ -78,6 +81,7 @@ class _CalcTextFieldState extends State<CalcTextField> {
       child: TextFormField(
         focusNode: _focusNode,
         controller: widget.controller,
+        textInputAction: TextInputAction.done,
         initialValue: widget.controller == null ? widget.initialValue : null,
         keyboardType: widget.keyboardType,
         enabled: widget.enabled,
@@ -93,7 +97,12 @@ class _CalcTextFieldState extends State<CalcTextField> {
             widget.inputFormatters ??
             (widget.keyboardType == TextInputType.number ||
                     widget.keyboardType ==
-                        const TextInputType.numberWithOptions(decimal: true)
+                        const TextInputType.numberWithOptions(decimal: true) ||
+                    widget.keyboardType ==
+                        const TextInputType.numberWithOptions(
+                          decimal: true,
+                          signed: true,
+                        )
                 ? [
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
                     TextInputFormatter.withFunction((oldValue, newValue) {
